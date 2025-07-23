@@ -149,13 +149,13 @@ const Homepage = () => {
         )}
 
         {/* Get Started Section */}
-        {!hasSearched && !loading && (
+        {/* {!hasSearched && !loading && (
           <div className="text-center">
             <button className="px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-lg font-medium">
               Get Started Learning
             </button>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

@@ -15,7 +15,7 @@ async def root():
 
 @app.get("/peers/{name}")
 async def read_item(name: str):
-    return {"peers": f"{get_peer_companies('{name}')}"}
+    return {"peers": f'{get_peer_companies(name)}'}
 
 # Add CORS middleware
 app.add_middleware(
