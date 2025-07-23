@@ -1,0 +1,4 @@
+yfinance
+fastapi[all]
+google-auth
+google-genai

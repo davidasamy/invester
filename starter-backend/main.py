@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-
+from gemini_utils import get_peer_companies
 
 # Create a FastAPI instance
 app = FastAPI()
@@ -13,9 +13,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def root():
     return {"message": "Hello World"}
 
-@app.get("/greeting/{name}")
+@app.get("/peers/{name}")
 async def read_item(name: str):
-    return {"message": f"Hello {name}"}
+    return {"peers": f"{get_peer_companies('{name}')}"}
 
 # Add CORS middleware
 app.add_middleware(
