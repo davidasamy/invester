@@ -16,6 +16,9 @@
 
 /* Homepage.css */
 
+.bg-pure-black {
+  background-color: #000000 !important;
+}
 /* Define a custom dark grey color using Bootstrap's gray variable */
 .bg-custom-dark-grey {
   background-color: var(--bs-gray-800) !important; /* This is #343a40, used for similar companies */
