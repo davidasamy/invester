@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import Stock from './stock';
+
 
 const Homepage = () => {
   const [ticker, setTicker] = useState('');
@@ -6,6 +8,8 @@ const Homepage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
+  // NEW STATE: To manage which stock is selected for the detail page
+  const [selectedStock, setSelectedStock] = useState(null);
 
   const searchSimilarCompanies = async (e) => {
     if (e) e.preventDefault();
@@ -54,9 +58,30 @@ const Homepage = () => {
     setError('');
   };
   
+ //funciton to get the stock clikced on
+  const handleStockSelect = async (symbol) => {
+    setLoading(true); // Optionally show a loading state while fetching detail data
+    setError('');
+    setSelectedStock(symbol); // Set the state, which triggers rendering of Stock component
+   
+  };
+
+  // --- FUNCTION TO GO BACK TO HOMEPAGE ---
+  const goBackToStocks = () => {
+    setSelectedStock(null); // Clear the selected stock, returning to Homepage view
+    setLoading(false); // Ensure the overall loading state is false
+    setError(''); // Clear any general errors that might be displayed
+    
+  };
+
+  if (selectedStock) {
+    // If a stock is selected, render the Stock detail page
+    return <Stock selectedStock={selectedStock} goBackToStocks={goBackToStocks} />;
+  }
+
   return (
       // Replaced min-h-screen bg-black text-white p-6 with Bootstrap equivalents
-      <div className="bg-dark text-white min-vh-100 py-5"> {/* bg-dark for black, text-white, min-vh-100 for full height, py-5 for padding */}
+      <div className="bg-pure-black text-white min-vh-100 py-5"> {/* bg-dark for black, text-white, min-vh-100 for full height, py-5 for padding */}
       <div className="container"> {/* Bootstrap container for centered content and max-width */}
         {/* Header Section */}
         <div className="text-center mb-5"> {/* text-center and mb-5 for margin-bottom */}
@@ -94,7 +119,7 @@ const Homepage = () => {
               >
                 {loading ? (
                   <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span className="spinner-border bg-dark spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                     Searching...
                   </>
                 ) : (
@@ -115,9 +140,9 @@ const Homepage = () => {
         {/* Results Section */}
         {hasSearched && (
           // bg-white rounded shadow p-4 for white background, rounded corners, shadow, padding
-          <div className="p-4 mb-4 rounded border border-secondary">
+          <div className="p-4 mb-4 rounded  border-secondary">
             {/* h4 for heading size, text-dark for black text, mb-4 for margin */}
-            <div className="bg-custom-dark-grey text-white rounded p-3 mb-4 border border-secondary">
+            <div className="bg-custom-dark-grey text-white rounded p-3 mb-4 border border-secondary" onClick={() => handleStockSelect(ticker.toUpperCase())}>
             <h3 className="display-5 text-white mb-2 text-center">{ticker.toUpperCase()}</h3>
                   <p className="lead text-secondary text-center mb-4">full name</p> {/* Full Company Name */}
                   <div className="row text-center">
@@ -154,7 +179,7 @@ const Homepage = () => {
                 {similarCompanies.map((company, index) => (
                   <div key={index} className="col-12"> {/* col for grid item */}
                     {/* card for structure, h-100 to make cards same height, bg-light, border-light */}
-                    <div className="card bg-dark border-secondary text-white card-hover-effect">
+                    <div className="card bg-dark border-secondary text-white card-hover-effect" onClick={() => handleStockSelect(company)}>
                       <div className="card-body d-flex justify-content-between align-items-center"> {/* card-body for padding inside card */}
                         <h5 className="card-title text-white mb-0">
                           {company}
@@ -184,7 +209,7 @@ const Homepage = () => {
         {/* Loading State */}
         {loading && (
           // bg-white rounded shadow p-4 text-center for styling
-          <div className="bg-white rounded shadow p-4 text-center mb-4">
+          <div className="bg-dark rounded shadow p-4 text-center mb-4">
             {/* Bootstrap spinner-border for spinner, text-primary for blue color, mb-3 */}
             <div className="spinner-border text-primary mb-3" role="status">
               <span className="visually-hidden">Loading...</span> {/* For accessibility */}
