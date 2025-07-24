@@ -259,40 +259,104 @@ class ValuePriceCalculationService:
         self.valuation_methods = ['pe_ratio', 'pb_ratio', 'ps_ratio']
         self.quality_metrics = ['roe', 'debt_to_equity']
     
+    def _remove_outliers(self, series: pd.Series, method: str = 'iqr') -> pd.Series:
+        """Remove extreme outliers from peer data"""
+        if len(series) < 3:
+            return series
+        
+        if method == 'iqr':
+            Q1 = series.quantile(0.25)
+            Q3 = series.quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 2.0 * IQR  # More conservative than 1.5
+            upper_bound = Q3 + 2.0 * IQR
+            return series[(series >= lower_bound) & (series <= upper_bound)]
+        
+        elif method == 'zscore':
+            z_scores = np.abs((series - series.mean()) / series.std())
+            return series[z_scores < 2.5]  # Remove values >2.5 std devs
+        
+        return series
+
     def calculate_peer_statistics(self, peer_metrics: List[EssentialMetrics]) -> Dict[str, Dict[str, float]]:
-        """Calculate statistics for valuation multiples and quality metrics"""
+        """Calculate statistics for valuation multiples and quality metrics with outlier removal"""
         if not peer_metrics:
             return {}
         
         df = pd.DataFrame([m.to_dict() for m in peer_metrics])
         stats = {}
         
-        # Calculate stats for valuation multiples
+        # Calculate stats for valuation multiples with outlier removal
         for col in self.valuation_methods:
             if col in df.columns:
                 series = df[col].dropna()
-                if len(series) > 1:
+                if len(series) > 2:  # Need at least 3 points for outlier removal
+                    # Remove outliers
+                    clean_series = self._remove_outliers(series, method='iqr')
+                    
+                    # Ensure we still have enough data points
+                    if len(clean_series) >= 2:
+                        # Apply reasonable caps for extreme multiples
+                        if col == 'pe_ratio':
+                            clean_series = clean_series[clean_series <= 100]  # Cap PE at 100
+                        elif col == 'pb_ratio':
+                            clean_series = clean_series[clean_series <= 20]   # Cap PB at 20
+                        elif col == 'ps_ratio':
+                            clean_series = clean_series[clean_series <= 30]   # Cap PS at 30
+                        
+                        if len(clean_series) >= 2:
+                            stats[col] = {
+                                'median': float(clean_series.median()),
+                                'mean': float(clean_series.mean()),
+                                '25th_percentile': float(clean_series.quantile(0.25)),
+                                '75th_percentile': float(clean_series.quantile(0.75)),
+                                'std': float(clean_series.std()) if clean_series.std() > 0 else 0.0,
+                                'count': int(len(clean_series)),
+                                'outliers_removed': int(len(series) - len(clean_series))
+                            }
+                elif len(series) >= 2:  # Fallback for small datasets
                     stats[col] = {
                         'median': float(series.median()),
                         'mean': float(series.mean()),
                         '25th_percentile': float(series.quantile(0.25)),
                         '75th_percentile': float(series.quantile(0.75)),
                         'std': float(series.std()) if series.std() > 0 else 0.0,
-                        'count': int(len(series))
+                        'count': int(len(series)),
+                        'outliers_removed': 0
                     }
         
-        # Calculate stats for quality metrics (ROE and D/E)
+        # Calculate stats for quality metrics (ROE and D/E) with outlier removal
         for col in self.quality_metrics:
             if col in df.columns:
                 series = df[col].dropna()
-                if len(series) > 1:
+                if len(series) > 2:
+                    clean_series = self._remove_outliers(series, method='iqr')
+                    
+                    # Apply reasonable bounds
+                    if col == 'roe':
+                        clean_series = clean_series[(clean_series >= -0.5) & (clean_series <= 1.0)]  # -50% to 100%
+                    elif col == 'debt_to_equity':
+                        clean_series = clean_series[clean_series <= 10.0]  # Cap D/E at 10
+                    
+                    if len(clean_series) >= 2:
+                        stats[col] = {
+                            'median': float(clean_series.median()),
+                            'mean': float(clean_series.mean()),
+                            '25th_percentile': float(clean_series.quantile(0.25)),
+                            '75th_percentile': float(clean_series.quantile(0.75)),
+                            'std': float(clean_series.std()) if clean_series.std() > 0 else 0.0,
+                            'count': int(len(clean_series)),
+                            'outliers_removed': int(len(series) - len(clean_series))
+                        }
+                elif len(series) >= 2:
                     stats[col] = {
                         'median': float(series.median()),
                         'mean': float(series.mean()),
                         '25th_percentile': float(series.quantile(0.25)),
                         '75th_percentile': float(series.quantile(0.75)),
                         'std': float(series.std()) if series.std() > 0 else 0.0,
-                        'count': int(len(series))
+                        'count': int(len(series)),
+                        'outliers_removed': 0
                     }
         
         return stats
@@ -302,7 +366,7 @@ class ValuePriceCalculationService:
         adjustments = []
         
         # ROE adjustment (higher ROE = premium valuation)
-        if (target.roe is not None and target.roe > 0 and 
+        if (target.roe is not None and target.roe > -0.5 and target.roe < 1.0 and 
             'roe' in peer_stats and peer_stats['roe']['count'] >= 2):
             
             peer_roe_median = peer_stats['roe']['median']
@@ -311,12 +375,12 @@ class ValuePriceCalculationService:
             if peer_roe_std > 0:
                 # Calculate z-score and convert to adjustment factor
                 roe_z_score = (target.roe - peer_roe_median) / peer_roe_std
-                # Cap the adjustment between -30% and +30%
-                roe_adjustment = max(-0.3, min(0.3, roe_z_score * 0.1))
+                # More conservative adjustment: cap between -15% and +15%
+                roe_adjustment = max(-0.15, min(0.15, roe_z_score * 0.05))
                 adjustments.append(roe_adjustment)
         
         # Debt-to-Equity adjustment (lower D/E = premium valuation)
-        if (target.debt_to_equity is not None and target.debt_to_equity >= 0 and 
+        if (target.debt_to_equity is not None and target.debt_to_equity >= 0 and target.debt_to_equity <= 10.0 and
             'debt_to_equity' in peer_stats and peer_stats['debt_to_equity']['count'] >= 2):
             
             peer_de_median = peer_stats['debt_to_equity']['median']
@@ -325,18 +389,43 @@ class ValuePriceCalculationService:
             if peer_de_std > 0:
                 # Calculate z-score (inverted because lower D/E is better)
                 de_z_score = (peer_de_median - target.debt_to_equity) / peer_de_std
-                # Cap the adjustment between -20% and +20%
-                de_adjustment = max(-0.2, min(0.2, de_z_score * 0.08))
+                # More conservative adjustment: cap between -10% and +10%
+                de_adjustment = max(-0.10, min(0.10, de_z_score * 0.04))
                 adjustments.append(de_adjustment)
         
-        # Return combined adjustment factor
+        # Return combined adjustment factor with additional safety cap
         if adjustments:
             total_adjustment = sum(adjustments) / len(adjustments)  # Average the adjustments
+            # Final safety cap: maximum ±20% total adjustment
+            total_adjustment = max(-0.20, min(0.20, total_adjustment))
             return 1.0 + total_adjustment  # Convert to multiplier (1.0 = no adjustment)
         
         return 1.0  # No adjustment if no quality metrics available
+    def _apply_sanity_checks(self, value_price: float, current_price: Optional[float], method: str) -> float:
+        """Apply sanity checks to prevent extreme valuations"""
+        if current_price and current_price > 0:
+            # Cap maximum deviation at 300% (4x) and minimum at -75% (0.25x)
+            max_price = current_price * 4.0
+            min_price = current_price * 0.25
+            
+            if value_price > max_price:
+                logger.warning(f"{method} valuation of ${value_price:.2f} capped at ${max_price:.2f} (4x current price)")
+                return max_price
+            elif value_price < min_price:
+                logger.warning(f"{method} valuation of ${value_price:.2f} capped at ${min_price:.2f} (0.25x current price)")
+                return min_price
+        
+        # Absolute price sanity checks
+        if value_price < 0.01:  # Minimum $0.01
+            return 0.01
+        elif value_price > 10000:  # Maximum $10,000
+            logger.warning(f"{method} valuation capped at $10,000")
+            return 10000.0
+        
+        return value_price
+
     def calculate_value_price_components(self, target: EssentialMetrics, peer_stats: Dict) -> Dict[str, Dict[str, float]]:
-        """Calculate value price using different valuation methods with quality adjustments"""
+        """Calculate value price using different valuation methods with quality adjustments and safeguards"""
         components = {}
         
         # Calculate quality adjustment factor
@@ -347,51 +436,72 @@ class ValuePriceCalculationService:
             'pe_ratio' in peer_stats and peer_stats['pe_ratio']['count'] >= 2):
             
             peer_pe_median = peer_stats['pe_ratio']['median']
-            base_pe_value_price = target.earnings_per_share * peer_pe_median
-            adjusted_pe_value_price = base_pe_value_price * quality_adjustment
             
-            components['pe_valuation'] = {
-                'base_value_price': round(base_pe_value_price, 2),
-                'quality_adjustment': round(quality_adjustment, 3),
-                'value_price': round(adjusted_pe_value_price, 2),
-                'peer_median_multiple': round(peer_pe_median, 2),
-                'target_metric_value': round(target.earnings_per_share, 2),
-                'confidence': min(100, peer_stats['pe_ratio']['count'] * 20)
-            }
+            # Additional check: ensure reasonable PE median
+            if 5 <= peer_pe_median <= 100:  # Reasonable PE range
+                base_pe_value_price = target.earnings_per_share * peer_pe_median
+                adjusted_pe_value_price = base_pe_value_price * quality_adjustment
+                
+                # Apply sanity checks
+                final_pe_value = self._apply_sanity_checks(adjusted_pe_value_price, target.current_price, "PE")
+                
+                components['pe_valuation'] = {
+                    'base_value_price': round(base_pe_value_price, 2),
+                    'quality_adjustment': round(quality_adjustment, 3),
+                    'value_price': round(final_pe_value, 2),
+                    'peer_median_multiple': round(peer_pe_median, 2),
+                    'target_metric_value': round(target.earnings_per_share, 2),
+                    'confidence': min(100, peer_stats['pe_ratio']['count'] * 20),
+                    'sanity_check_applied': final_pe_value != adjusted_pe_value_price
+                }
         
         # PB-based valuation
         if (target.book_value_per_share and target.book_value_per_share > 0 and 
             'pb_ratio' in peer_stats and peer_stats['pb_ratio']['count'] >= 2):
             
             peer_pb_median = peer_stats['pb_ratio']['median']
-            base_pb_value_price = target.book_value_per_share * peer_pb_median
-            adjusted_pb_value_price = base_pb_value_price * quality_adjustment
             
-            components['pb_valuation'] = {
-                'base_value_price': round(base_pb_value_price, 2),
-                'quality_adjustment': round(quality_adjustment, 3),
-                'value_price': round(adjusted_pb_value_price, 2),
-                'peer_median_multiple': round(peer_pb_median, 2),
-                'target_metric_value': round(target.book_value_per_share, 2),
-                'confidence': min(100, peer_stats['pb_ratio']['count'] * 20)
-            }
+            # Additional check: ensure reasonable PB median
+            if 0.1 <= peer_pb_median <= 20:  # Reasonable PB range
+                base_pb_value_price = target.book_value_per_share * peer_pb_median
+                adjusted_pb_value_price = base_pb_value_price * quality_adjustment
+                
+                # Apply sanity checks
+                final_pb_value = self._apply_sanity_checks(adjusted_pb_value_price, target.current_price, "PB")
+                
+                components['pb_valuation'] = {
+                    'base_value_price': round(base_pb_value_price, 2),
+                    'quality_adjustment': round(quality_adjustment, 3),
+                    'value_price': round(final_pb_value, 2),
+                    'peer_median_multiple': round(peer_pb_median, 2),
+                    'target_metric_value': round(target.book_value_per_share, 2),
+                    'confidence': min(100, peer_stats['pb_ratio']['count'] * 20),
+                    'sanity_check_applied': final_pb_value != adjusted_pb_value_price
+                }
         
         # PS-based valuation
         if (target.revenue_per_share and target.revenue_per_share > 0 and 
             'ps_ratio' in peer_stats and peer_stats['ps_ratio']['count'] >= 2):
             
             peer_ps_median = peer_stats['ps_ratio']['median']
-            base_ps_value_price = target.revenue_per_share * peer_ps_median
-            adjusted_ps_value_price = base_ps_value_price * quality_adjustment
             
-            components['ps_valuation'] = {
-                'base_value_price': round(base_ps_value_price, 2),
-                'quality_adjustment': round(quality_adjustment, 3),
-                'value_price': round(adjusted_ps_value_price, 2),
-                'peer_median_multiple': round(peer_ps_median, 2),
-                'target_metric_value': round(target.revenue_per_share, 2),
-                'confidence': min(100, peer_stats['ps_ratio']['count'] * 20)
-            }
+            # Additional check: ensure reasonable PS median
+            if 0.1 <= peer_ps_median <= 30:  # Reasonable PS range
+                base_ps_value_price = target.revenue_per_share * peer_ps_median
+                adjusted_ps_value_price = base_ps_value_price * quality_adjustment
+                
+                # Apply sanity checks
+                final_ps_value = self._apply_sanity_checks(adjusted_ps_value_price, target.current_price, "PS")
+                
+                components['ps_valuation'] = {
+                    'base_value_price': round(base_ps_value_price, 2),
+                    'quality_adjustment': round(quality_adjustment, 3),
+                    'value_price': round(final_ps_value, 2),
+                    'peer_median_multiple': round(peer_ps_median, 2),
+                    'target_metric_value': round(target.revenue_per_share, 2),
+                    'confidence': min(100, peer_stats['ps_ratio']['count'] * 20),
+                    'sanity_check_applied': final_ps_value != adjusted_ps_value_price
+                }
         
         return components
     
@@ -438,7 +548,7 @@ class ValuePriceCalculationService:
         methods = list(components.keys())
         insights.append(f"Valuation based on {len(methods)} method(s): {', '.join([m.replace('_', ' ').title() for m in methods])}")
         
-        # Quality adjustment insights
+        # Quality adjustment insights with safety warnings
         if any('quality_adjustment' in comp for comp in components.values()):
             sample_adjustment = next(comp['quality_adjustment'] for comp in components.values() if 'quality_adjustment' in comp)
             if sample_adjustment > 1.05:
@@ -447,6 +557,20 @@ class ValuePriceCalculationService:
                 insights.append(f"Quality discount applied: {((1 - sample_adjustment) * 100):.1f}% (inferior ROE/D/E vs peers)")
             else:
                 insights.append("Quality metrics in line with peer average")
+        
+        # Sanity check warnings
+        sanity_checks_applied = [comp.get('sanity_check_applied', False) for comp in components.values()]
+        if any(sanity_checks_applied):
+            insights.append("⚠️ Extreme valuations detected and capped for reasonableness")
+        
+        # Outlier removal notifications
+        outliers_info = []
+        for metric in ['pe_ratio', 'pb_ratio', 'ps_ratio']:
+            if metric in peer_stats and peer_stats[metric].get('outliers_removed', 0) > 0:
+                outliers_info.append(f"{peer_stats[metric]['outliers_removed']} {metric.upper()} outliers")
+        
+        if outliers_info:
+            insights.append(f"Peer data cleaned: {', '.join(outliers_info)} removed")
         
         # ROE comparison
         if (target.roe is not None and 'roe' in peer_stats):
@@ -585,7 +709,7 @@ if __name__ == "__main__":
     
     # This will make only 7 API calls total (1 target + 6 peers)
     try:
-        result = service.get_stock_valuation('AAPL', num_peers=10)
+        result = service.get_stock_valuation('GOOG', num_peers=40)
         print(f"Analysis complete with {result.peer_count} peers")
         print(f"Current Price: ${result.current_price}")
         print(f"Calculated Value Price: ${result.calculated_value_price}")
