@@ -53,86 +53,127 @@ const Homepage = () => {
     setTicker(e.target.value);
     setError('');
   };
-
+  
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+      // Replaced min-h-screen bg-black text-white p-6 with Bootstrap equivalents
+      <div className="bg-dark text-white min-vh-100 py-5"> {/* bg-dark for black, text-white, min-vh-100 for full height, py-5 for padding */}
+      <div className="container"> {/* Bootstrap container for centered content and max-width */}
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-800 mb-4">
-            Welcome to Invester
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">
+        <div className="text-center mb-5"> {/* text-center and mb-5 for margin-bottom */}
+          {/* text-success for green, display-4 for large text, fw-bold for bold, mb-3 for margin */}
+          <h1 className="text-success display-4 fw-bold mb-3">Stock Overflow</h1>
+          {/* lead for slightly larger text, text-secondary for gray, mb-4 for margin */}
+          <p className="lead text-secondary mb-4">
             Discover similar companies and learn more about investing
           </p>
         </div>
 
         {/* Search Section */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <div onSubmit={searchSimilarCompanies} className="space-y-6">
-            <div>
-              <label htmlFor="ticker" className="">
-                Enter Stock Ticker Symbol
-              </label>
-              <div className="flex gap-4">
-                <input
-                  type="text"
-                  id="ticker"
-                  value={ticker}
-                  onChange={handleInputChange}
-                  placeholder="e.g., AAPL, TSLA, MSFT"
-                  className=""
-                  disabled={loading}
-                  onKeyPress={(e) => e.key === 'Enter' && searchSimilarCompanies(e)}
-                />
-                <button
-                  type="button"
-                  onClick={searchSimilarCompanies}
-                  disabled={loading}
-                  className=""
-                >
-                  {loading ? 'Searching...' : 'Find Similar Companies'}
-                </button>
-              </div>
+        {/* Using a form for better accessibility and default submission handling */}
+        <form onSubmit={searchSimilarCompanies} className="mb-5"> {/* mb-5 for margin-bottom */}
+          <div className="mb-3"> {/* Bootstrap form group margin */}
+            <label htmlFor="ticker" className="form-label text-white"> {/* form-label for proper styling */}
+              Enter Stock Ticker Symbol
+            </label>
+            <div className="input-group"> {/* Bootstrap input group for input and button side-by-side */}
+              <input
+                type="text"
+                id="ticker"
+                value={ticker}
+                onChange={handleInputChange}
+                placeholder="e.g., AAPL, TSLA, MSFT"
+                // form-control for input styling, bg-dark, border-secondary, text-white for dark theme
+                className="form-control bg-dark border-secondary text-white placeholder-secondary"
+                disabled={loading}
+              />
+              <button
+                type="submit" // Use type="submit" for form submission
+                onClick={searchSimilarCompanies}
+                disabled={loading}
+                className="btn btn-success" // btn and btn-success for green button
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Searching...
+                  </>
+                ) : (
+                  'Find Similar Companies'
+                )}
+              </button>
             </div>
           </div>
 
           {error && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600">{error}</p>
+            // Bootstrap alert for error messages
+            <div className="alert alert-danger mt-3" role="alert"> {/* mt-3 for margin-top */}
+              {error}
             </div>
           )}
-        </div>
+        </form>
 
         {/* Results Section */}
         {hasSearched && (
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">
-              Companies Similar to {ticker.toUpperCase()}
-            </h2>
-            
-            {similarCompanies.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {similarCompanies.map((company, index) => (
-                  <div
-                    key={index}
-                    className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="text-lg font-semibold text-gray-800">
-                      {company}
+          // bg-white rounded shadow p-4 for white background, rounded corners, shadow, padding
+          <div className="p-4 mb-4 rounded border border-secondary">
+            {/* h4 for heading size, text-dark for black text, mb-4 for margin */}
+            <div className="bg-custom-dark-grey text-white rounded p-3 mb-4 border border-secondary">
+            <h3 className="display-5 text-white mb-2 text-center">{ticker.toUpperCase()}</h3>
+                  <p className="lead text-secondary text-center mb-4">full name</p> {/* Full Company Name */}
+                  <div className="row text-center">
+                    <div className="col-md-6 mb-3">
+                      <p className="mb-0 text-success fw-bold fs-4">
+                        price
+                      </p>
+                      <p className="small text-muted mb-0">Current Price</p>
                     </div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      Similar Company #{index + 1}
+                    <div className="col-md-6 mb-3">
+                      <p className="mb-0 text-info fw-bold fs-4"> 'N/A'</p> {/* DCF */}
+                      <p className="small text-muted mb-0">DCF (Discounted Cash Flow)</p>
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <p className="mb-0 text-white">0</p> {/* P/E */}
+                      <p className="small text-muted mb-0">P/E Ratio</p>
+                    </div>
+                     <div className="col-md-6 mb-3">
+                      <p className="mb-0 text-white"> 5</p>
+                      <p className="small text-muted mb-0">Profit Margin</p>
+                    </div>
+                  </div>
+                  <div className="text-center mt-3">
+                    <p className="mb-0 text-white"><span className="text-secondary">Stock Overview Valution:</span> hi</p>
+                  </div>
+            </div>
+            
+
+
+
+            {similarCompanies.length > 0 ? (
+              // row and row-cols-* for responsive grid, g-3 for gutter
+              <div className="row g-3">
+                {similarCompanies.map((company, index) => (
+                  <div key={index} className="col-12"> {/* col for grid item */}
+                    {/* card for structure, h-100 to make cards same height, bg-light, border-light */}
+                    <div className="card bg-dark border-secondary text-white card-hover-effect">
+                      <div className="card-body d-flex justify-content-between align-items-center"> {/* card-body for padding inside card */}
+                        <h5 className="card-title text-white mb-0">
+                          {company}
+                        </h5>
+                        <p className="card-text text-secondary small mb-0"> {/* card-text, text-secondary, small for smaller text */}
+                          Similar Company #{index + 1}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <div className="text-gray-500 text-lg">
+              // text-center py-4 for centering and padding, lead for larger text, text-secondary for gray
+              <div className="text-center py-4">
+                <div className="lead text-secondary">
                   No similar companies found for {ticker.toUpperCase()}
                 </div>
-                <p className="text-gray-400 mt-2">
+                <p className="text-muted mt-2"> {/* text-muted for lighter gray, mt-2 for margin */}
                   Try searching for a different ticker symbol
                 </p>
               </div>
@@ -142,20 +183,15 @@ const Homepage = () => {
 
         {/* Loading State */}
         {loading && (
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-            <p className="text-gray-600">Searching for similar companies...</p>
+          // bg-white rounded shadow p-4 text-center for styling
+          <div className="bg-white rounded shadow p-4 text-center mb-4">
+            {/* Bootstrap spinner-border for spinner, text-primary for blue color, mb-3 */}
+            <div className="spinner-border text-primary mb-3" role="status">
+              <span className="visually-hidden">Loading...</span> {/* For accessibility */}
+            </div>
+            <p className="text-secondary">Searching for similar companies...</p>
           </div>
         )}
-
-        {/* Get Started Section */}
-        {/* {!hasSearched && !loading && (
-          <div className="text-center">
-            <button className="px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-lg font-medium">
-              Get Started Learning
-            </button>
-          </div>
-        )} */}
       </div>
     </div>
   );

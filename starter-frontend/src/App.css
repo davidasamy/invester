@@ -3,7 +3,7 @@
   max-width: 400px;
   margin: 0 auto;
   padding: 20px;
-  background-color: #f9f9f9;
+  background-color: #000000;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
@@ -12,4 +12,40 @@
   font-size: 24px;
   margin-bottom: 20px;
   text-align: center;
+}
+
+/* Homepage.css */
+
+/* Define a custom dark grey color using Bootstrap's gray variable */
+.bg-custom-dark-grey {
+  background-color: var(--bs-gray-800) !important; /* This is #343a40, used for similar companies */
+}
+
+/* NEW: Custom background for the ticker details section - slightly lighter dark grey */
+.bg-ticker-details {
+  background-color: var(--bs-gray-700) !important; /* This is #495057 */
+}
+
+/* Hover effect for the similar company cards */
+.card-hover-effect {
+  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+  cursor: pointer; /* Indicate that it's clickable */
+}
+
+.card-hover-effect:hover {
+  background-color: var(--bs-gray-700) !important; /* This is #495057 */
+  border-color: var(--bs-gray-600) !important;
+}
+
+/* Optional: Adjust input focus style for consistency with dark theme */
+.form-control.bg-custom-dark-grey:focus {
+  background-color: var(--bs-gray-800) !important;
+  border-color: var(--bs-primary) !important;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Ensure placeholder text is visible on dark inputs */
+.form-control.bg-custom-dark-grey::placeholder {
+  color: var(--bs-secondary) !important;
+  opacity: 1;
 }
