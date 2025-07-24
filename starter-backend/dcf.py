@@ -68,7 +68,7 @@ def dcf_data(ticker: str):
             "Shares Outstanding": shares_outstanding
         }
         #if ticker is not found: 
-         except Exception as e:
+    except Exception as e:
         print(f"Error retrieving data for {ticker}: {e}")
         return None
 
@@ -121,7 +121,7 @@ def calculate_dcf_with_llm_rates(
     enterprise_value = pv_projected_fcfs + pv_terminal_value
     equity_value = enterprise_value + cash - debt
     intrinsic_value_per_share = equity_value / shares if shares > 0 else 0
-    
+
 #Finally, returning the results and the values of the data points used. 
     return {
         "Ticker": ticker,
