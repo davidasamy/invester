@@ -62,11 +62,11 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
         <div className="bg-custom-dark-grey rounded p-4 mb-4"> {/* Using bg-custom-dark-grey for the main card */}
           <div className="d-flex justify-content-between align-items-start mb-4">
             <div>
-              <h2 className="text-white mb-1 display-5">symbol</h2> {/* display-5 for larger symbol */}
-              <h3 className="text-secondary h5 mb-0">name</h3> {/* h5 for name */}
+              <h2 className="text-white mb-1 display-5">{selectedStock.ticker}</h2> {/* display-5 for larger symbol */}
+              <h3 className="text-secondary h5 mb-0">{selectedStock.target_metrics.name}</h3> {/* h5 for name */}
             </div>
             <div className="text-end">
-              <p className="text-white fs-4 mb-0"> Price</p> {/* fs-4 for larger price */}
+              <p className="text-white fs-4 mb-0"> {selectedStock.cur_price}</p> {/* fs-4 for larger price */}
               <p> nums
               </p>
             </div>
@@ -77,7 +77,7 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
             <div className="col">
               <div className="bg-dark rounded p-3 h-100"> {/* bg-dark for inner cards, h-100 for equal height */}
                 <h4 className="text-secondary small mb-2">Current Price</h4>
-                <p className="text-white fs-5"> 'N/A'</p> {/* fs-5 for larger text */}
+                <p className="text-white fs-5"> {selectedStock.current_price}</p> {/* fs-5 for larger text */}
               </div>
             </div>
             <div className="col">
@@ -89,7 +89,7 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
             <div className="col">
               <div className="bg-dark rounded p-3 h-100">
                 <h4 className="text-secondary small mb-2">Our Evaluation</h4>
-                <p className="text-white fs-5"> 'N/A'</p>
+                <p className="text-white fs-5"> {selectedStock.calculated_value_price}</p>
               </div>
             </div>
           </div>
@@ -112,13 +112,14 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
             <div className="col">
               <div className="bg-dark rounded p-3 h-100">
                 <h4 className="text-secondary small mb-2">P/E Ratio</h4>
-                <p className="text-white fs-5"> 'N/A'</p> {/* Using selectedStock.peRatio */}
+                <p className="text-white fs-5"> {selectedStock.target_metrics.pe_ratio}</p> {/* Using selectedStock.peRatio */}
               </div>
             </div>
             <div className="col">
               <div className="bg-dark rounded p-3 h-100">
-                <h4 className="text-secondary small mb-2">Price Change (24h)</h4>
-                <p> 5</p>
+                {/*could also be price change just need to know how to access it */}
+                <h4 className="text-secondary small mb-2">Price Difference</h4>
+                <p> {selectedStock.price_difference}</p>
               </div>
             </div>
           </div>
