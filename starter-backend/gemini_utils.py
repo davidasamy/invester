@@ -652,9 +652,12 @@ class StockValuationService:
         peer_stats = self.valuation_service.calculate_peer_statistics(peer_metrics)
         valuation_components = self.valuation_service.calculate_value_price_components(target_metrics, peer_stats)
         calculated_value_price, method = self.valuation_service.calculate_composite_value_price(valuation_components)
+
+        current_price = target_metrics.current_price
+        calculated_value_price = min((current_price + current_price) * 0.3, calculated_value_price)
+        calculated_value_price = max((current_price - current_price) * 0.3, calculated_value_price)
         
         # Calculate price differences
-        current_price = target_metrics.current_price
         price_difference = None
         price_difference_percent = None
         
@@ -666,7 +669,7 @@ class StockValuationService:
         insights = self.valuation_service.generate_insights(
             target_metrics, valuation_components, current_price, calculated_value_price, peer_stats
         )
-        
+       
         return ValuationResult(
             ticker=ticker.upper(),
             analysis_date=datetime.now().isoformat(),
