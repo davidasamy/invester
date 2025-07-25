@@ -666,7 +666,7 @@ class StockValuationService:
         insights = self.valuation_service.generate_insights(
             target_metrics, valuation_components, current_price, calculated_value_price, peer_stats
         )
-        
+       
         return ValuationResult(
             ticker=ticker.upper(),
             analysis_date=datetime.now().isoformat(),

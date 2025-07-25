@@ -1,7 +1,6 @@
 from dcf import calculate_dcf_with_llm_rates 
 from dcf import dcf_data
 from dcf import get_projected_growth_rates
-from gemini_utils import get_peer_companies
 import json
 
 
