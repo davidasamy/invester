@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from gemini_utils import StockValuationService
+from dcf import calculate_dcf_with_llm_rates
 
 # Create a FastAPI instance
 app = FastAPI()
@@ -23,6 +24,23 @@ async def value(stock: str):
 @app.get("/peers/{stock}")
 async def read_item(stock: str):
     return {"peers": [stock, 'test']}
+
+@app.post("/api/dcf-calculate")
+async def dcf_calculate_endpoint(request: DcfCalculationRequest):
+    try: 
+        dcf_result = calculate_dcf_with_llm_rates(
+            ticker=request.ticker,
+            perpetual_growth_rate=request.perpetual_growth_rate,
+            discount_rate=request.discount_rate,
+            projection_years=request.projection_years
+        )
+
+        return dcf_result
+
+    except Exception as e:
+        print("Error")
+
+
 
 # Add CORS middleware
 app.add_middleware(
