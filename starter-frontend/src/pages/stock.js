@@ -38,8 +38,6 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
     );
   }
 
- 
-  //const IconComponent = getIconComponent(valuation.icon);
 
   return (
     <div className="bg-pure-black text-white min-vh-100 py-5">

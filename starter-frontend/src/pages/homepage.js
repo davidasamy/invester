@@ -169,9 +169,6 @@ const Homepage = () => {
                     <p className="mb-0 text-white"><span className="text-secondary">Stock Overview Valution:</span> hi</p>
                   </div>
             </div>
-            
-
-
 
             {similarCompanies.length > 0 ? (
               // row and row-cols-* for responsive grid, g-3 for gutter
