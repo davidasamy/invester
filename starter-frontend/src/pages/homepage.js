@@ -8,8 +8,9 @@ const Homepage = () => {
   const [error, setError] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
+  const [curTickerData, setCurTickerData] = useState(null);
 
-  const searchSimilarCompanies = async (e) => {
+  const getFullStockDataSearch= async (e) => {
     if (e) e.preventDefault();
 
     const trimmedTicker = ticker.trim();
@@ -21,20 +22,26 @@ const Homepage = () => {
     setLoading(true);
     setError('');
     setHasSearched(false);
+    setCurTickerData(null)
+    
 
     try {
-      const response = await fetch(`http://localhost:8000/peers/${trimmedTicker.toUpperCase()}`);
+      const response = await fetch(`http://localhost:8000/value/${trimmedTicker.toUpperCase()}`);
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
-      }
 
-      let peers = data.peers;
+      if (!response.ok) {
+        throw new Error('Failed to fetch stock data from /value endpoint.');
+      }
+      const valuationResult = data.result; 
+      setCurTickerData(valuationResult);
+      let peers = valuationResult.peer_tickers;
+
+      
       if (typeof peers === 'string') {
         peers = peers.replace(/[\[\]']/g, '').split(',').map(item => item.trim());
       }
-
+  
       const companiesArray = Array.isArray(peers) ? peers.slice(0, 10) : [];
       const filteredCompanies = companiesArray
         .filter(company => company.toUpperCase() !== trimmedTicker.toUpperCase())
@@ -42,29 +49,54 @@ const Homepage = () => {
 
       setSimilarCompanies(filteredCompanies);
       setHasSearched(true);
+
     } catch (err) {
-      setError('Failed to fetch similar companies. Please check if the ticker is valid.');
+      setError('Failed to fetch similar companies or stock data. Please check if the ticker is valid.');
       setSimilarCompanies([]);
+      setCurTickerData(null);
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleInputChange = (e) => {
     setTicker(e.target.value);
     setError('');
   };
 
-  const handleStockSelect = (symbol) => {
+  // --- CORRECTED handleStockSelect FUNCTION ---
+  const handleStockSelect = async (symbol) => { // 'symbol' is the ticker string from onClick
+    console.log(`[handleStockSelect] Called for symbol: ${symbol}`); // Log 10
     setLoading(true);
     setError('');
-    setSelectedStock(symbol);
+    setSelectedStock(null);
+
+    try {
+      // Fetch the full detailed stock data object using the helper
+      const response = await fetch(`http://localhost:8000/value/${symbol.toUpperCase()}`);
+      const data = await response.json();
+
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch stock data from /value endpoint.');
+      }
+      const valuationResult = data.result; 
+      setSelectedStock(valuationResult);
+
+    } catch (err) {
+       setError(`Could not load full details for ${symbol}. Data not found.`);
+      setSelectedStock(null);
+    } finally {
+      setLoading(false);
+    }   
   };
 
   const goBackToStocks = () => {
     setSelectedStock(null);
     setLoading(false);
     setError('');
+    
   };
 
   if (selectedStock) {
@@ -81,7 +113,7 @@ const Homepage = () => {
           </p>
         </div>
 
-        <form onSubmit={searchSimilarCompanies} className="mb-5">
+        <form onSubmit={getFullStockDataSearch} className="mb-5">
           <div className="mb-3">
             <label htmlFor="ticker" className="form-label text-white">
               Enter Stock Ticker Symbol
@@ -125,11 +157,11 @@ const Homepage = () => {
             {/* Stock Info (Left) */}
             <div className="col-md-8">
               <div className="bg-custom-dark-grey text-white rounded p-4 border border-secondary">
-                <h3 className="display-5 text-white mb-2 text-center">{ticker.toUpperCase()}</h3>
-                <p className="lead text-secondary text-center mb-4">Full Name</p>
+                <h3 className="display-5 text-white mb-2 text-center">{curTickerData.ticker}</h3>
+                <p className="lead text-secondary text-center mb-4">{curTickerData.target_metrics.name}</p>
                 <div className="row text-center">
                   <div className="col-md-6 mb-3">
-                    <p className="mb-0 text-success fw-bold fs-4">price</p>
+                    <p className="mb-0 text-success fw-bold fs-4">{curTickerData.current_price}</p>
                     <p className="small text-muted mb-0">Current Price</p>
                   </div>
                   <div className="col-md-6 mb-3">
@@ -137,17 +169,17 @@ const Homepage = () => {
                     <p className="small text-muted mb-0">DCF (Discounted Cash Flow)</p>
                   </div>
                   <div className="col-md-6 mb-3">
-                    <p className="mb-0 text-white">0</p>
+                    <p className="mb-0 text-white">{curTickerData.target_metrics.pe_ratio}</p>
                     <p className="small text-muted mb-0">P/E Ratio</p>
                   </div>
                   <div className="col-md-6 mb-3">
-                    <p className="mb-0 text-white">5</p>
+                    <p className="mb-0 text-white">{curTickerData.target_metrics.profit_margin}</p>
                     <p className="small text-muted mb-0">Profit Margin</p>
                   </div>
                 </div>
                 <div className="text-center mt-3">
                   <p className="mb-3 text-white">
-                    <span className="text-secondary">Stock Overview Valuation:</span> hi
+                    <span className="text-secondary">Stock Overview Valuation:</span> {curTickerData.calculated_value_price}
                   </p>
                   <button
                     className="btn btn-outline-success"
@@ -190,7 +222,7 @@ const Homepage = () => {
             <div className="spinner-border text-primary mb-3" role="status">
               <span className="visually-hidden">Loading...</span>
             </div>
-            <p className="text-secondary">Searching for similar companies...</p>
+            <p className="text-secondary">Searching for data...</p>
           </div>
         )}
       </div>
@@ -199,3 +231,32 @@ const Homepage = () => {
 };
 
 export default Homepage;
+
+/*
+{
+  "result": {
+    "ticker": "AAPL",
+    "analysis_date": "...",
+    "current_price": 175.20,
+    "calculated_value_price": 180.50,
+    "price_difference": 5.30,
+    "price_difference_percent": 3.02,
+    "valuation_method": "Composite",
+    "target_metrics": {  // <--- THIS IS WHERE YOUR FRONTEND EXPECTS THE STOCK DATA
+      "symbol": "AAPL",
+      "name": "Apple Inc.",
+      "market_cap": "2.7T",
+      "pe_ratio": "28.5",
+      "sector": "Technology",
+      "currency": "USD",
+      "current_price": 175.20 // Note: current_price is here and at top-level
+      // ... potentially other metrics that 'get_essential_metrics' returns
+    },
+    "peer_tickers": ["MSFT", "GOOG"],
+    "peer_count": 2,
+    "peer_statistics": { ... },
+    "valuation_components": { ... },
+    "key_insights": "Apple Inc. (AAPL) continues to demonstrate strong brand loyalty..."
+  }
+}
+  */

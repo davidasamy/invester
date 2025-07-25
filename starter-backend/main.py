@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from gemini_utils import StockValuationService
 from pydantic import BaseModel
+from sentiment import StockSentimentService
 from dcf import calculate_dcf_with_llm_rates
 
 class DcfCalculationRequest(BaseModel):
@@ -11,12 +12,19 @@ class DcfCalculationRequest(BaseModel):
     discount_rate: float = 0.10          
     projection_years: int = 5
 
+
+
 # Create a FastAPI instance
 app = FastAPI()
-service = StockValuationService(
+valuation_service = StockValuationService(
         project_id='kir-sprinternship-2025-dev',
         cache_duration=60  # 1 hour cache
     )
+
+sentiment_service = StockSentimentService(
+        project_id='kir-sprinternship-2025-dev'
+    )
+
 # Mount the static files directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -26,7 +34,11 @@ async def root():
 
 @app.get("/value/{stock}")
 async def value(stock: str):
-    return {"result": service.get_stock_valuation(stock, 15)}
+    return {"result": valuation_service.get_stock_valuation(stock, 15)}
+
+@app.get("/sentiment/{stock}")
+async def sentiment(stock: str):
+    return {"result": sentiment_service.get_sentiment(stock)}
 
 @app.get("/peers/{stock}")
 async def read_item(stock: str):
