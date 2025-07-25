@@ -2,7 +2,14 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from gemini_utils import StockValuationService
+from pydantic import BaseModel
 from dcf import calculate_dcf_with_llm_rates
+
+class DcfCalculationRequest(BaseModel):
+    ticker: str
+    perpetual_growth_rate: float = 0.025 
+    discount_rate: float = 0.10          
+    projection_years: int = 5
 
 # Create a FastAPI instance
 app = FastAPI()
