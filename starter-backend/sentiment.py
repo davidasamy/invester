@@ -23,7 +23,6 @@ class StockSentimentService:
 
         for new in news:
             news_info = {}
-            print(new["content"].keys())
             news_info["contentType"] = new["content"]["contentType"]
             news_info["title"] = new["content"]["title"]
             news_info["summary"] = new["content"]["summary"]
@@ -33,7 +32,7 @@ class StockSentimentService:
             features.append(news_info)
         
 
-        prompt = f"You are a market trends analyst. You have read the following news articles / video. Tell us what do you think of {stock} in the coming months. \n \n {features}"
+        prompt = f"You are a market trends analyst. You have already read the following news articles / video {features}. Write a 120-word report on your professional opinion of {stock} in the coming months. Cite the articles whenever you reference information from them. \n \n "
 
         response = self.ai_client.models.generate_content(
             model="gemini-2.5-flash",
