@@ -685,6 +685,9 @@ class StockValuationService:
         
         # Calculate price differences
         current_price = target_metrics.current_price
+        calculated_value_price = min(current_price + current_price * 0.2, calculated_value_price)
+        calculated_value_price = max(current_price - current_price * 0.2, calculated_value_price)
+        
         price_difference = None
         price_difference_percent = None
         
