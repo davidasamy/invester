@@ -1,15 +1,17 @@
-import yfinance as yf
-from google import genai
-import pandas as pd
-import numpy as np
-from typing import Dict, List, Optional, Any
-import warnings
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
 import logging
-from enum import Enum
 import time
-from functools import lru_cache
+import warnings
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
+from dcf import calculate_dcf_with_llm_rates
+                 
+from google import genai
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -60,6 +62,7 @@ class ValuationResult:
     peer_statistics: Dict[str, Dict[str, float]]
     valuation_components: Dict[str, Dict[str, float]]
     key_insights: List[str]
+    dcf_price: float
     
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -609,6 +612,32 @@ class ValuePriceCalculationService:
         return insights
 
 class StockValuationService:
+
+    #This function will retrieve the data needed for the DCF calculation, from the yfinance API.
+    def dcf_data(self, ticker: str):
+    #This try and except block will handle errors in case the ticker is not found or the data cannot be retrieved.   
+        try:
+            stock = yf.Ticker(ticker)
+            cashflow = stock.cashflow
+            balance_sheet = stock.balance_sheet
+            # Extract the most recent data points
+            fcf = cashflow.loc['Free Cash Flow'][0] if not cashflow.empty and 'Free Cash Flow' in cashflow.index else None
+            cash_and_equivalents = balance_sheet.loc['Cash And Cash Equivalents'][0] if not balance_sheet.empty and 'Cash And Cash Equivalents' in balance_sheet.index else None
+            total_debt = balance_sheet.loc['Total Debt'][0] if not balance_sheet.empty and 'Total Debt' in balance_sheet.index else None
+            shares_outstanding = stock.info.get('sharesOutstanding')
+
+            return {
+                "ticker": ticker,
+                "FCF": fcf,
+                "Cash & Cash Equivalents": cash_and_equivalents,
+                "Total Debt": total_debt,
+                "Shares Outstanding": shares_outstanding
+            }
+            #if ticker is not found: 
+        except Exception as e:
+            print(f"Error retrieving data for {ticker}: {e}")
+            return None
+    
     """Main service for calculating stock value price using peer multiples"""
     
     def __init__(self, project_id: Optional[str] = None, location: str = 'us-central1', cache_duration: int = 30):
@@ -652,12 +681,9 @@ class StockValuationService:
         peer_stats = self.valuation_service.calculate_peer_statistics(peer_metrics)
         valuation_components = self.valuation_service.calculate_value_price_components(target_metrics, peer_stats)
         calculated_value_price, method = self.valuation_service.calculate_composite_value_price(valuation_components)
-
-        current_price = target_metrics.current_price
-        calculated_value_price = min(current_price + current_price * 0.3, calculated_value_price)
-        calculated_value_price = max(current_price - current_price * 0.3, calculated_value_price)
         
         # Calculate price differences
+        current_price = target_metrics.current_price
         price_difference = None
         price_difference_percent = None
         
@@ -669,7 +695,7 @@ class StockValuationService:
         insights = self.valuation_service.generate_insights(
             target_metrics, valuation_components, current_price, calculated_value_price, peer_stats
         )
-       
+        
         return ValuationResult(
             ticker=ticker.upper(),
             analysis_date=datetime.now().isoformat(),
@@ -683,7 +709,8 @@ class StockValuationService:
             peer_count=len(peer_metrics),
             peer_statistics=peer_stats,
             valuation_components=valuation_components,
-            key_insights=insights
+            key_insights=insights,
+            dcf_price=calculate_dcf_with_llm_rates(ticker, 0.025, 0.1, 5)
         )
     
     def get_basic_metrics(self, ticker: str) -> Dict[str, Any]:
