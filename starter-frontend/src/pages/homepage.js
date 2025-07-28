@@ -9,6 +9,7 @@ const Homepage = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [curTickerData, setCurTickerData] = useState(null);
+  /*const [curPeerTickerData, setCurPeerTickerData] = useState(null);*/
 
   const getFullStockDataSearch= async (e) => {
     if (e) e.preventDefault();
@@ -102,6 +103,8 @@ const Homepage = () => {
   if (selectedStock) {
     return <Stock selectedStock={selectedStock} goBackToStocks={goBackToStocks} />;
   }
+
+  
 
   return (
     <div className="bg-pure-black text-white min-vh-100 py-5">
@@ -201,7 +204,7 @@ const Homepage = () => {
                       <button
                         key={index}
                         onClick={() => handleStockSelect(company)}
-                        className="list-group-item list-group-item-action bg-dark text-white border-secondary mb-2"
+                        className="list-group-item list-group-item-action bg-dark text-white border-secondary mb-2 card-hover-effect"
                       >
                         {company} <span className="text-muted float-end">#{index + 1}</span>
                       </button>

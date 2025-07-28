@@ -67,8 +67,6 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
             </div>
             <div className="text-end">
               <p className="text-white fs-4 mb-0"> {selectedStock.cur_price}</p> {/* fs-4 for larger price */}
-              <p> nums
-              </p>
             </div>
           </div>
 
