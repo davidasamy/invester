@@ -15,6 +15,60 @@ const Homepage = () => {
   // New state to cache all fetched stock data
   const [stockDataCache, setStockDataCache] = useState({});
 
+  // Helper function to determine metric color based on value and type
+  const getMetricColor = useCallback((metricType, value) => {
+    if (value === null || value === undefined) return 'text-secondary';
+    
+    switch (metricType) {
+      case 'pe_ratio':
+        // Good P/E: 10-25, Decent: 5-10 or 25-35, Poor: <5 or >35
+        if (value >= 10 && value <= 25) return 'text-success'; // Green - Good
+        if ((value >= 5 && value < 10) || (value > 25 && value <= 35)) return 'text-warning'; // Yellow - Decent
+        return 'text-danger'; // Red - Poor
+        
+      case 'profit_margin':
+        // Convert to percentage if it's a decimal
+        const margin = value > 1 ? value : value * 100;
+        // Good: >15%, Decent: 5-15%, Poor: <5%
+        if (margin >= 15) return 'text-success';
+        if (margin >= 5) return 'text-warning';
+        return 'text-danger';
+        
+      case 'price_comparison':
+        // Compare current price vs calculated value
+        // This would need the calculated value to determine if stock is undervalued/overvalued
+        return 'stock-green'; // Default to your existing green
+        
+      case 'dcf':
+        // DCF is typically just informational
+        return 'stock-green'; // Default to your existing green
+        
+      default:
+        return 'stock-green'; // Default to your existing green
+    }
+  }, []);
+
+  // Helper function to get metric description with color context
+  const getMetricDescription = useCallback((metricType, value) => {
+    if (value === null || value === undefined) return 'N/A';
+    
+    switch (metricType) {
+      case 'pe_ratio':
+        if (value >= 10 && value <= 25) return 'Good P/E Ratio';
+        if ((value >= 5 && value < 10) || (value > 25 && value <= 35)) return 'Moderate P/E Ratio';
+        return value < 5 ? 'Very Low P/E Ratio' : 'High P/E Ratio';
+        
+      case 'profit_margin':
+        const margin = value > 1 ? value : value * 100;
+        if (margin >= 15) return 'Strong Profit Margin';
+        if (margin >= 5) return 'Moderate Profit Margin';
+        return 'Low Profit Margin';
+        
+      default:
+        return '';
+    }
+  }, []);
+
   // Memoized helper function to fetch stock data
   const fetchStockData = useCallback(async (symbol) => {
     const upperSymbol = symbol.toUpperCase();
@@ -119,32 +173,58 @@ const Homepage = () => {
     setError('');
   }, []);
 
-  // Memoized components for better performance
+  // Memoized components for better performance with color coding
   const stockMetrics = useMemo(() => {
     if (!curTickerData) return null;
     console.log(curTickerData);
     const { target_metrics } = curTickerData;
+    
     return (
       <div className="row text-center">
         <div className="col-md-6 mb-3">
-          <p className="mb-0 stock-green fw-bold fs-4">{curTickerData.current_price.toFixed(2)}</p>
+          <p className={`mb-0 fw-bold fs-4 ${getMetricColor('price_comparison', curTickerData.current_price)}`}>
+            ${curTickerData.current_price.toFixed(2)}
+          </p>
           <p className="small metric-desc mb-0">Current Price</p>
         </div>
         <div className="col-md-6 mb-3">
-        <p className="mb-0 stock-green fw-bold fs-4">{curTickerData.dcf_price["Intrinsic Value Per Share"].toFixed(2)}</p>
+          <p className={`mb-0 fw-bold fs-4 ${getMetricColor('dcf', curTickerData.dcf_price["Intrinsic Value Per Share"])}`}>
+            ${curTickerData.dcf_price["Intrinsic Value Per Share"].toFixed(2)}
+          </p>
           <p className="small metric-desc mb-0">DCF (Discounted Cash Flow)</p>
         </div>
         <div className="col-md-6 mb-3">
-          <p className="mb-0 stock-green fw-bold fs-4">{target_metrics.pe_ratio.toFixed(2)}</p>
-          <p className="small metric-desc mb-0">P/E Ratio</p>
+          <p className={`mb-0 fw-bold fs-4 ${getMetricColor('pe_ratio', target_metrics.pe_ratio)}`}>
+            {target_metrics.pe_ratio ? target_metrics.pe_ratio.toFixed(2) : 'N/A'}
+          </p>
+          <p className="small metric-desc mb-0">
+            P/E Ratio
+            {target_metrics.pe_ratio && (
+              <span className={`d-block small ${getMetricColor('pe_ratio', target_metrics.pe_ratio)}`}>
+                {getMetricDescription('pe_ratio', target_metrics.pe_ratio)}
+              </span>
+            )}
+          </p>
         </div>
         <div className="col-md-6 mb-3">
-          <p className="mb-0 stock-green fw-bold fs-4">{target_metrics.profit_margin.toFixed(2)}</p>
-          <p className="small metric-desc mb-0">Profit Margin</p>
+          <p className={`mb-0 fw-bold fs-4 ${getMetricColor('profit_margin', target_metrics.profit_margin)}`}>
+            {target_metrics.profit_margin ? 
+              `${(target_metrics.profit_margin > 1 ? target_metrics.profit_margin : target_metrics.profit_margin * 100).toFixed(2)}%` 
+              : 'N/A'
+            }
+          </p>
+          <p className="small metric-desc mb-0">
+            Profit Margin
+            {target_metrics.profit_margin && (
+              <span className={`d-block small ${getMetricColor('profit_margin', target_metrics.profit_margin)}`}>
+                {getMetricDescription('profit_margin', target_metrics.profit_margin)}
+              </span>
+            )}
+          </p>
         </div>
       </div>
     );
-  }, [curTickerData]);
+  }, [curTickerData, getMetricColor, getMetricDescription]);
 
   const similarCompaniesList = useMemo(() => (
     similarCompanies.length > 0 ? (

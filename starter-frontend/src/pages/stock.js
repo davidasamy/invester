@@ -209,8 +209,7 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
               )}
             </div>
             <p className="text-secondary small mb-0">
-              Based on our analysis, this stock appears to be {valuationStatus?.status.toLowerCase()} 
-              relative to its calculated fair value of ${selectedStock.calculated_value_price?.toFixed(2)}.
+              Based on our analysis, this stock appears to be {valuationStatus?.status.toLowerCase()} relative to its calculated fair value of ${selectedStock.calculated_value_price?.toFixed(2)}.
             </p>
           </div>
 
