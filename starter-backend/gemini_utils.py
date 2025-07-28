@@ -50,6 +50,7 @@ class EssentialMetrics:
 class ValuationResult:
     """Result of stock valuation analysis with calculated value price"""
     ticker: str
+    full_name: str
     analysis_date: str
     current_price: Optional[float]
     calculated_value_price: Optional[float]
@@ -698,6 +699,7 @@ class StockValuationService:
         
         return ValuationResult(
             ticker=ticker.upper(),
+            full_name=yf.Ticker(ticker).info["longName"],
             analysis_date=datetime.now().isoformat(),
             current_price=current_price,
             calculated_value_price=calculated_value_price,
