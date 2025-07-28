@@ -44,7 +44,7 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
       <div className="container">
         {/* Header Section - Reusing from Homepage for consistency */}
         <header className="text-center mb-5">
-          <h1 className="text-success display-4 fw-bold mb-3">Stock Overflow</h1>
+          <h1 className="stock-green display-4 fw-bold mb-3">Stock Overflow</h1>
           {/* Navigation can be simplified or removed if this is a dedicated detail page */}
           {/* For now, keeping it minimal as per screenshot */}
         </header>

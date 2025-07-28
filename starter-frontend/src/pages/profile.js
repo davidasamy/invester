@@ -5,7 +5,7 @@ const Profile = () => {
     <div className="bg-pure-black text-white min-vh-100 py-5">
       <div className="container">
         <div className="text-center mb-5">
-          <h1 className="text-success display-4 fw-bold mb-3">About Stock Overflow</h1>
+          <h1 className="stock-green display-4 fw-bold mb-3">About Stock Overflow</h1>
           <p className="lead text-secondary mb-4">
             Empowering investors through data-driven analysis and transparent insights.
           </p>
@@ -89,7 +89,7 @@ const Profile = () => {
                 <div className="bg-secondary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: 80, height: 80 }}>
                   <span className="text-white fw-bold">{member.initials}</span>
                 </div>
-                <h5 className="text-success">{member.name}</h5>
+                <h5 className="stock-green">{member.name}</h5>
                 <p className="text-white mb-1">{member.title}</p>
                 <p className="text-secondary small">{member.bio}</p>
               </div>

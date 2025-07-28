@@ -107,9 +107,10 @@ const Homepage = () => {
     <div className="bg-pure-black text-white min-vh-100 py-5">
       <div className="container">
         <div className="text-center mb-5">
-          <h1 className="text-success display-4 fw-bold mb-3">Stock Overflow</h1>
+          <h1 className="stock-green display-4 fw-bold mb-3">Stock Overflow  
+          </h1> 
           <p className="lead text-secondary mb-4">
-            Discover similar companies and learn more about investing
+            The AI-Powered Investment Tool for Everyone.
           </p>
         </div>
 
@@ -131,7 +132,7 @@ const Homepage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn btn-success"
+                className="btn green-button "
               >
                 {loading ? (
                   <>
@@ -139,9 +140,10 @@ const Homepage = () => {
                     Searching...
                   </>
                 ) : (
-                  'Find Stocks'
+                  'Valuate'
                 )}
               </button>
+              
             </div>
           </div>
 
@@ -161,7 +163,7 @@ const Homepage = () => {
                 <p className="lead text-secondary text-center mb-4">{curTickerData.target_metrics.name}</p>
                 <div className="row text-center">
                   <div className="col-md-6 mb-3">
-                    <p className="mb-0 text-success fw-bold fs-4">{curTickerData.current_price}</p>
+                    <p className="mb-0 stock-green fw-bold fs-4">{curTickerData.current_price}</p>
                     <p className="small text-muted mb-0">Current Price</p>
                   </div>
                   <div className="col-md-6 mb-3">

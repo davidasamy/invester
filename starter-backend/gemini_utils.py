@@ -687,7 +687,7 @@ class StockValuationService:
         current_price = target_metrics.current_price
         calculated_value_price = min(current_price + current_price * 0.2, calculated_value_price)
         calculated_value_price = max(current_price - current_price * 0.2, calculated_value_price)
-        
+
         price_difference = None
         price_difference_percent = None
         
@@ -704,8 +704,8 @@ class StockValuationService:
             ticker=ticker.upper(),
             full_name=yf.Ticker(ticker).info["longName"],
             analysis_date=datetime.now().isoformat(),
-            current_price=current_price,
-            calculated_value_price=calculated_value_price,
+            current_price=int(current_price),
+            calculated_value_price=int(calculated_value_price),
             price_difference=price_difference,
             price_difference_percent=price_difference_percent,
             valuation_method=method,
