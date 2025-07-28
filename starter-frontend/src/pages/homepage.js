@@ -181,46 +181,54 @@ const Homepage = () => {
     
     return (
       <div className="row text-center">
-        <div className="col-md-6 mb-3">
-          <p className={`mb-0 fw-bold fs-4 ${getMetricColor('price_comparison', curTickerData.current_price)}`}>
-            ${curTickerData.current_price.toFixed(2)}
-          </p>
-          <p className="small metric-desc mb-0">Current Price</p>
+        <div className="col-6 col-md-3 mb-4">
+          <div className="p-3 rounded-3" style={{background: 'rgba(255, 255, 255, 0.02)'}}>
+            <p className={`mb-1 fw-bold ${getMetricColor('price_comparison', curTickerData.current_price)}`} style={{fontSize: '1.4rem'}}>
+              ${curTickerData.current_price.toFixed(2)}
+            </p>
+            <p className="small text-secondary mb-0" style={{fontSize: '0.85rem'}}>Current Price</p>
+          </div>
         </div>
-        <div className="col-md-6 mb-3">
-          <p className={`mb-0 fw-bold fs-4 ${getMetricColor('dcf', curTickerData.dcf_price["Intrinsic Value Per Share"])}`}>
-            ${curTickerData.dcf_price["Intrinsic Value Per Share"].toFixed(2)}
-          </p>
-          <p className="small metric-desc mb-0">DCF (Discounted Cash Flow)</p>
+        <div className="col-6 col-md-3 mb-4">
+          <div className="p-3 rounded-3" style={{background: 'rgba(255, 255, 255, 0.02)'}}>
+            <p className={`mb-1 fw-bold ${getMetricColor('dcf', curTickerData.dcf_price["Intrinsic Value Per Share"])}`} style={{fontSize: '1.4rem'}}>
+              ${curTickerData.dcf_price["Intrinsic Value Per Share"].toFixed(2)}
+            </p>
+            <p className="small text-secondary mb-0" style={{fontSize: '0.85rem'}}>DCF Value</p>
+          </div>
         </div>
-        <div className="col-md-6 mb-3">
-          <p className={`mb-0 fw-bold fs-4 ${getMetricColor('pe_ratio', target_metrics.pe_ratio)}`}>
-            {target_metrics.pe_ratio ? target_metrics.pe_ratio.toFixed(2) : 'N/A'}
-          </p>
-          <p className="small metric-desc mb-0">
-            P/E Ratio
-            {target_metrics.pe_ratio && (
-              <span className={`d-block small ${getMetricColor('pe_ratio', target_metrics.pe_ratio)}`}>
-                {getMetricDescription('pe_ratio', target_metrics.pe_ratio)}
-              </span>
-            )}
-          </p>
+        <div className="col-6 col-md-3 mb-4">
+          <div className="p-3 rounded-3" style={{background: 'rgba(255, 255, 255, 0.02)'}}>
+            <p className={`mb-1 fw-bold ${getMetricColor('pe_ratio', target_metrics.pe_ratio)}`} style={{fontSize: '1.4rem'}}>
+              {target_metrics.pe_ratio ? target_metrics.pe_ratio.toFixed(2) : 'N/A'}
+            </p>
+            <p className="small text-secondary mb-0" style={{fontSize: '0.85rem'}}>
+              P/E Ratio
+              {target_metrics.pe_ratio && (
+                <span className={`d-block ${getMetricColor('pe_ratio', target_metrics.pe_ratio)}`} style={{fontSize: '0.75rem'}}>
+                  {getMetricDescription('pe_ratio', target_metrics.pe_ratio)}
+                </span>
+              )}
+            </p>
+          </div>
         </div>
-        <div className="col-md-6 mb-3">
-          <p className={`mb-0 fw-bold fs-4 ${getMetricColor('profit_margin', target_metrics.profit_margin)}`}>
-            {target_metrics.profit_margin ? 
-              `${(target_metrics.profit_margin > 1 ? target_metrics.profit_margin : target_metrics.profit_margin * 100).toFixed(2)}%` 
-              : 'N/A'
-            }
-          </p>
-          <p className="small metric-desc mb-0">
-            Profit Margin
-            {target_metrics.profit_margin && (
-              <span className={`d-block small ${getMetricColor('profit_margin', target_metrics.profit_margin)}`}>
-                {getMetricDescription('profit_margin', target_metrics.profit_margin)}
-              </span>
-            )}
-          </p>
+        <div className="col-6 col-md-3 mb-4">
+          <div className="p-3 rounded-3" style={{background: 'rgba(255, 255, 255, 0.02)'}}>
+            <p className={`mb-1 fw-bold ${getMetricColor('profit_margin', target_metrics.profit_margin)}`} style={{fontSize: '1.4rem'}}>
+              {target_metrics.profit_margin ? 
+                `${(target_metrics.profit_margin > 1 ? target_metrics.profit_margin : target_metrics.profit_margin * 100).toFixed(1)}%` 
+                : 'N/A'
+              }
+            </p>
+            <p className="small text-secondary mb-0" style={{fontSize: '0.85rem'}}>
+              Profit Margin
+              {target_metrics.profit_margin && (
+                <span className={`d-block ${getMetricColor('profit_margin', target_metrics.profit_margin)}`} style={{fontSize: '0.75rem'}}>
+                  {getMetricDescription('profit_margin', target_metrics.profit_margin)}
+                </span>
+              )}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -228,19 +236,40 @@ const Homepage = () => {
 
   const similarCompaniesList = useMemo(() => (
     similarCompanies.length > 0 ? (
-      <div className="list-group">
+      <div className="d-grid gap-2">
         {similarCompanies.map((company, index) => (
           <button
             key={company}
             onClick={() => handleStockSelect(company)}
-            className="list-group-item list-group-item-action bg-dark text-white border-secondary mb-2"
+            className="btn text-start p-3 rounded-3 border-0"
+            style={{
+              background: '#262626',
+              color: 'white',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-1px)';
+              e.target.style.background = '#333';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.background = '#262626';
+            }}
           >
-            {company} <span className="metric-desc float-end">#{index + 1}</span>
+            <div className="d-flex justify-content-between align-items-center">
+              <span style={{fontWeight: '600', fontSize: '0.95rem'}}>{company}</span>
+              <span className="badge rounded-pill" style={{backgroundColor: 'rgba(0, 200, 81, 0.2)', color: '#00C851', fontSize: '0.8rem'}}>
+                #{index + 1}
+              </span>
+            </div>
           </button>
         ))}
       </div>
     ) : (
-      <p className="text-secondary text-center">No similar companies found.</p>
+      <div className="text-center py-4">
+        <i className="fas fa-search text-secondary mb-2" style={{fontSize: '2rem'}}></i>
+        <p className="text-secondary mb-0" style={{fontSize: '0.9rem'}}>No similar companies found</p>
+      </div>
     )
   ), [similarCompanies, handleStockSelect]);
 
@@ -303,49 +332,69 @@ const Homepage = () => {
         </form>
 
         {/* Loading State */}
-        {loading && (
-          <div className="bg-dark rounded shadow p-4 text-center mb-4">
-            <div className="spinner-border text-primary mb-3" role="status">
-              <span className="visually-hidden">Loading...</span>
+        {loading && !hasSearched && (
+          <div className="d-flex justify-content-center mb-5">
+            <div className="bg-dark rounded-3 shadow p-4 text-center" style={{maxWidth: '400px', width: '100%'}}>
+              <div className="spinner-border mb-3" style={{color: '#00C851'}} role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="text-secondary mb-0" style={{fontSize: '0.95rem'}}>Analyzing stock data...</p>
             </div>
-            <p className="text-secondary">Sending AI-Agents...</p>
           </div>
         )}
 
         {/* Results */}
         {hasSearched && curTickerData && (
-          <div className="row g-4">
+          <div className="row justify-content-center g-4">
             {/* Stock Info */}
-            <div className="col-md-8">
-              <div className="bg-custom-dark-grey text-white rounded p-4 border border-secondary">
-                <p className="lead text-secondary text-center mb-4">
-                  {curTickerData.target_metrics.full_name}
-                </p>
+            <div className="col-lg-7 col-md-8">
+              <div className="rounded-3 p-4 shadow" style={{background: '#1a1a1a', border: '1px solid #333'}}>
+                <div className="text-center mb-4">
+                  <h2 className="text-white mb-2" style={{fontSize: '1.5rem', fontWeight: '600'}}>
+                    {curTickerData.target_metrics.full_name}
+                  </h2>
+                  <span className="badge px-3 py-2" style={{backgroundColor: 'rgba(0, 200, 81, 0.1)', color: '#00C851', fontSize: '0.9rem'}}>
+                    {ticker.toUpperCase()}
+                  </span>
+                </div>
                 
                 {stockMetrics}
                 
-                <div className="text-center mt-3">
-                  <p className="lead mb-3 text-white">
-                    <span className=" text-main">Stock Overflow Valuation:</span>{' '}
-                <h3 className="display-5 text-white mb-2 fw-bold text-center">
-                ${curTickerData.calculated_value_price.toFixed(2)}
-                </h3>
-                    
-                  </p>
+                <div className="text-center mt-4 pt-3" style={{borderTop: '1px solid #333'}}>
+                  <p className="text-secondary mb-2" style={{fontSize: '0.95rem'}}>Stock Overflow Valuation</p>
+                  <h3 className="mb-3" style={{color: '#00C851', fontSize: '2.2rem', fontWeight: '700'}}>
+                    ${curTickerData.calculated_value_price.toFixed(2)}
+                  </h3>
                   <button
-                    className="btn btn-outline-success"
+                    className="btn px-4 py-2 rounded-3"
+                    style={{
+                      background: '#00C851',
+                      color: 'white',
+                      border: 'none',
+                      fontWeight: '600',
+                      transition: 'all 0.2s ease'
+                    }}
                     onClick={() => handleStockSelect(ticker.toUpperCase())}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#00D55C';
+                      e.target.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = '#00C851';
+                      e.target.style.transform = 'translateY(0)';
+                    }}
                   >
-                    View Full Info
+                    <i className="fas fa-chart-line me-2"></i>
+                    View Full Analysis
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Similar Companies */}
-            <div className="col-md-4">
-              <div className="bg-dark border border-secondary rounded p-3">
-                <h5 className="text-white mb-3 text-center">Similar Companies</h5>
+            <div className="col-lg-4 col-md-4">
+              <div className="rounded-3 p-3 shadow" style={{background: '#1a1a1a', border: '1px solid #333'}}>
+                <h5 className="text-white mb-3 text-center" style={{fontSize: '1.1rem', fontWeight: '600'}}>Similar Companies</h5>
                 {similarCompaniesList}
               </div>
             </div>
