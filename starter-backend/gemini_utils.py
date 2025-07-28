@@ -654,8 +654,8 @@ class StockValuationService:
         calculated_value_price, method = self.valuation_service.calculate_composite_value_price(valuation_components)
 
         current_price = target_metrics.current_price
-        calculated_value_price = min((current_price + current_price) * 0.3, calculated_value_price)
-        calculated_value_price = max((current_price - current_price) * 0.3, calculated_value_price)
+        calculated_value_price = min(current_price + current_price * 0.3, calculated_value_price)
+        calculated_value_price = max(current_price - current_price * 0.3, calculated_value_price)
         
         # Calculate price differences
         price_difference = None
