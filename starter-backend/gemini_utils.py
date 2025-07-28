@@ -61,6 +61,7 @@ class ValuationResult:
     peer_statistics: Dict[str, Dict[str, float]]
     valuation_components: Dict[str, Dict[str, float]]
     key_insights: List[str]
+    dcf_price: float
     
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -612,7 +613,7 @@ class ValuePriceCalculationService:
 class StockValuationService:
 
     """ DCF CALCULATOR"""
-    def get_projected_growth_rates(ticker: str, projection_years: int = 5) -> list[float]:
+    def get_projected_growth_rates(self, ticker: str, projection_years: int = 5) -> list[float]:
         """
     Uses Gemini to get estimates of growth rates (because the growth rate cannot be a constant value in the calculations.)
         """
@@ -658,7 +659,7 @@ class StockValuationService:
             return []
 
     #This function will retrieve the data needed for the DCF calculation, from the yfinance API.
-    def dcf_data(ticker: str):
+    def dcf_data(self, ticker: str):
     #This try and except block will handle errors in case the ticker is not found or the data cannot be retrieved.   
         try:
             stock = yf.Ticker(ticker)
@@ -684,6 +685,7 @@ class StockValuationService:
 
 
     def calculate_dcf_with_llm_rates(
+        self,
         ticker: str,
         perpetual_growth_rate: float=0.025,
         discount_rate: float=0.1,
@@ -782,12 +784,9 @@ class StockValuationService:
         peer_stats = self.valuation_service.calculate_peer_statistics(peer_metrics)
         valuation_components = self.valuation_service.calculate_value_price_components(target_metrics, peer_stats)
         calculated_value_price, method = self.valuation_service.calculate_composite_value_price(valuation_components)
-
-        current_price = target_metrics.current_price
-        calculated_value_price = min(current_price + current_price * 0.3, calculated_value_price)
-        calculated_value_price = max(current_price - current_price * 0.3, calculated_value_price)
         
         # Calculate price differences
+        current_price = target_metrics.current_price
         price_difference = None
         price_difference_percent = None
         
@@ -799,7 +798,7 @@ class StockValuationService:
         insights = self.valuation_service.generate_insights(
             target_metrics, valuation_components, current_price, calculated_value_price, peer_stats
         )
-       
+        
         return ValuationResult(
             ticker=ticker.upper(),
             analysis_date=datetime.now().isoformat(),
@@ -814,7 +813,7 @@ class StockValuationService:
             peer_statistics=peer_stats,
             valuation_components=valuation_components,
             key_insights=insights,
-            intrinsic_value_per_share=calculate_dcf_with_llm_rates(ticker, 0.025, 0.1, 5)
+            dcf_price=calculate_dcf_with_llm_rates(ticker, 0.025, 0.1, 5)
         )
     
     def get_basic_metrics(self, ticker: str) -> Dict[str, Any]:
