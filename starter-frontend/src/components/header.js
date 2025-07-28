@@ -3,11 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 
 const Header = () => {
     return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-        <img className="rising" src="rising.png"/>
+    <nav className="navbar navbar-expand-lg navbar-dark bg-black">
+        {/* <img className="rising" src="rising.png"/> */}
         <div className="container">
             <ul style={{display: 'flex', listStyle: 'none', padding: 10, margin: 0}}>
-                <li className="nav-item" style={{marginRight: '20px'}}>
+                {/* <li className="nav-item" style={{marginRight: '20px'}}>
                     <Link className="nav-link" to="/homepage" 
                     style={{ textDecoration: 'none' }}
                     onMouseEnter={e => e.target.style.textDecoration = 'underline'}
@@ -18,7 +18,7 @@ const Header = () => {
                     style={{ textDecoration: 'none' }}
                     onMouseEnter={e => e.target.style.textDecoration = 'underline'}
                     onMouseLeave={e => e.target.style.textDecoration = 'none'}>About</Link>
-                </li>
+                </li> */}
             </ul>
         </div>
     </nav>

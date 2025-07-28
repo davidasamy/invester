@@ -70,3 +70,7 @@
 .green-button {
   background-color: rgba(0,231,92,255);
 }
+
+.metric-desc {
+  color: white;
+}

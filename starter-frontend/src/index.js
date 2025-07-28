@@ -2,7 +2,7 @@ import React from 'react';  // import the react library
 import ReactDOM from 'react-dom/client';  // import the react dom client
 import App from './App';  // import the App component from App.js
 import { BrowserRouter } from 'react-router-dom';
-// note: this is the entry point for the react app. App.js is the root
+// note: this is the entry point for the Stock Overflow. App.js is the root
 // component that will be rendered on the page. the App component is
 // imported above and passed to the render function below
 

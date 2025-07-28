@@ -38,7 +38,7 @@ class StockSentimentService:
             model="gemini-2.5-flash",
             contents=prompt,
             config={
-                "temperature": 0.3,
+                "temperature": 0.42,
                 "response_mime_type": "application/json",
                 "response_schema": str,
             },
