@@ -17,7 +17,7 @@ class StockSentimentService:
                 logger.warning(f"AI client initialization failed: {e}")
 
     def get_sentiment(self, stock: str) -> str:
-        tick = Ticker("AAPL")
+        tick = Ticker(stock)
         news = tick.get_news(10)
         features = []
 
