@@ -2,7 +2,22 @@ import React, { useState, useCallback, useMemo } from 'react';
 import Stock from './stock';
 
 const API_BASE_URL = 'http://localhost:8000';
-const MAX_SIMILAR_COMPANIES = 5;
+
+const MAX_SIMILAR_COMPANIES = 6;
+const STOCK_COLORS = [
+  '#00C851', // Green
+  '#33b5e5', // Blue
+  '#aa66cc', // Purple
+  '#ffbb33', // Orange
+  '#2BBBAD', // Teal
+  '#4285F4', // Google Blue
+  '#10AC84', // Emerald
+  '#F368E0', // Pinkish
+  '#1E88E5', // Sky Blue
+  '#00ACC1', // Cyan
+  '#9C27B0', // Deep Purple
+  '#007E33', // Dark Green
+];
 
 // Popular stocks data
 const POPULAR_STOCKS = [
@@ -436,58 +451,56 @@ const Homepage = () => {
   // Popular stocks grid component
   const popularStocksGrid = useMemo(() => (
     <div className="row g-3">
-      {POPULAR_STOCKS.map((stock) => {
+      {POPULAR_STOCKS.map((stock, index) => {
         const currentPrice = popularStockPrices[stock.ticker];
         const isLoadingPrice = loadingPrices && !currentPrice;
-        
+        const stockColor = STOCK_COLORS[index % STOCK_COLORS.length]; // assign color by index
+
         return (
           <div key={stock.ticker} className="col-lg-2 col-md-3 col-sm-4 col-6">
             <button
               onClick={() => handlePopularStockSelect(stock.ticker)}
-              className="btn w-100 p-3 rounded-3 border-0 text-start"
+              className="shine-button btn w-100 p-3 rounded-3 border-0 text-start"
               style={{
                 background: '#1a1a1a',
                 color: 'white',
-                border: '1px solid #333',
+                border: `2px solid ${stockColor}`,
                 transition: 'all 0.2s ease',
                 minHeight: '120px'
               }}
-              onMouseEnter={(e) => {
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.background = '#262626';
-                e.target.style.borderColor = '#00C851';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.background = '#1a1a1a';
-                e.target.style.borderColor = '#333';
-              }}
+              // onMouseEnter={(e) => {
+              //   e.target.style.transform = 'translateY(-2px)';
+              //   e.target.style.background = '#262626';
+              // }}
+              // onMouseLeave={(e) => {
+              //   e.target.style.transform = 'translateY(0)';
+              //   e.target.style.background = '#1a1a1a';
+              // }}
               disabled={loading}
             >
               <div className="d-flex flex-column h-100">
                 <div className="d-flex justify-content-between align-items-start mb-2">
-                  <span className="fw-bold" style={{fontSize: '1rem', color: '#00C851'}}>
+                  <span className="fw-bold" style={{fontSize: '1rem', color: stockColor}}>
                     {stock.ticker}
                   </span>
                   <span 
                     className="badge rounded-pill" 
                     style={{
-                      backgroundColor: 'rgba(0, 200, 81, 0.1)', 
-                      color: '#00C851', 
+                      backgroundColor: `${stockColor}20`, // transparent bg
+                      color: stockColor, 
                       fontSize: '0.7rem'
                     }}
                   >
                     {stock.category}
                   </span>
                 </div>
-                
-                {/* Price Display */}
+
                 <div className="mb-2">
                   {isLoadingPrice ? (
                     <div className="d-flex align-items-center">
                       <div 
                         className="spinner-border spinner-border-sm me-2" 
-                        style={{color: '#00C851', width: '12px', height: '12px'}}
+                        style={{color: stockColor, width: '12px', height: '12px'}}
                         role="status"
                       >
                         <span className="visually-hidden">Loading...</span>
@@ -506,7 +519,7 @@ const Homepage = () => {
                     </span>
                   )}
                 </div>
-                
+
                 <span 
                   className="text-secondary mt-auto" 
                   style={{
@@ -526,6 +539,7 @@ const Homepage = () => {
           </div>
         );
       })}
+
     </div>
   ), [handlePopularStockSelect, loading, popularStockPrices, loadingPrices]);
 
@@ -592,7 +606,7 @@ const Homepage = () => {
                 Popular Stocks
               </h3>
               <p className="text-secondary" style={{fontSize: '0.95rem'}}>
-                Click on any stock below to get instant valuation
+                Click on any stock below to get an instant valuation
               </p>
             </div>
             {popularStocksGrid}

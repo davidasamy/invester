@@ -80,3 +80,37 @@ html, body {
   margin: 0;
   padding: 0;
 }
+
+
+
+.shine-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%; /* Start the shine off-screen to the left */
+  width: 90%; /* Adjust shine width as needed */
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 1.5s ease; /* Smooth transition for the shine movement */
+  transform: skewX(-20deg); /* Optional: add a slight slant to the shine */
+}
+
+.shine-button:hover::before {
+  left: 100%; /* Move the shine across the button */
+}
+
+.shine-button {
+  position: relative;
+  overflow: hidden;
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 4s ease, transform 4s ease;
+}
+
+.shine-button:hover {
+  transform: scale(1.15, 1.25);
+}
