@@ -421,7 +421,7 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
               this stock appears to be {valuationStatus?.status.toLowerCase()} relative to its calculated fair value of ${selectedStock.calculated_value_price?.toFixed(2)}.
             </p>
             
-            {/* Key Insights */}
+            {/* Key Insights
             {selectedStock.key_insights && selectedStock.key_insights.length > 0 && (
               <div className="mt-3">
                 <h6 className="text-white mb-2">Key Insights:</h6>
@@ -431,7 +431,7 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
                   ))}
                 </ul>
               </div>
-            )}
+            )} */}
           </div>
 
           {/* Analysis & Explanation Section */}

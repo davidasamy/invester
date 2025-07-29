@@ -23,7 +23,7 @@ const STOCK_COLORS = [
 const POPULAR_STOCKS = [
   { ticker: 'AAPL', name: 'Apple Inc.', category: 'Tech' },
   { ticker: 'MSFT', name: 'Microsoft Corp.', category: 'Tech' },
-  { ticker: 'GOOGL', name: 'Alphabet Inc.', category: 'Tech' },
+  { ticker: 'GOOG', name: 'Alphabet Inc.', category: 'Tech' },
   { ticker: 'AMZN', name: 'Amazon.com Inc.', category: 'E-commerce' },
   { ticker: 'TSLA', name: 'Tesla Inc.', category: 'Auto' },
   { ticker: 'NVDA', name: 'NVIDIA Corp.', category: 'Tech' },
