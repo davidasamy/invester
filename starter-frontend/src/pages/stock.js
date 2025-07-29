@@ -241,7 +241,7 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
         <div className="col-lg-3 col-md-6">
           <div className="bg-dark rounded-3 p-3 h-100">
             <h5 className="text-secondary small mb-2">Current Price</h5>
-            <p className={`mb-1 fw-bold fs-4 ${getMetricColor('price_comparison', currentPrice, currentPrice, dcfValue)}`}>
+            <p className={`mb-1 fw-bold fs-4`}>
               ${currentPrice?.toFixed(2) || 'N/A'}
             </p>
           </div>
@@ -264,8 +264,8 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
               ${calculatedValue?.toFixed(2) || 'N/A'}
             </p>
             
-            <small className={`${getMetricColor('valuation', target_metrics?.valuation)}`} style={{fontSize: '0.75rem'}}>
-              {getMetricDescription('valuation', target_metrics?.valuation)}
+            <small className={`${getMetricColor('valuation', calculatedValue, currentPrice)}`} style={{fontSize: '0.75rem'}}>
+              {getMetricDescription('valuation', calculatedValue, currentPrice)}
             </small>
           </div>
         </div>
@@ -391,7 +391,7 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
               </h3>
             </div>
             <div className="text-end">
-              <p className={`fs-3 mb-0 fw-bold ${getMetricColor('price_comparison', selectedStock.current_price, selectedStock.current_price, selectedStock.dcf_price["Intrinsic Value Per Share"])}`}>
+              <p className={`fs-3 mb-0 fw-bold`}>
                 ${selectedStock.current_price?.toFixed(2) || 'N/A'}
               </p>
               <p className={`small ${selectedStock.price_difference > 0 ? 'text-success' : selectedStock.price_difference < 0 ? 'text-danger' : 'text-secondary'}`}>

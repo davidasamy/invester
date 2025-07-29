@@ -235,13 +235,14 @@ class PeerCompanyService:
     
     def _get_ai_peers(self, ticker: str, num_peers: int) -> List[str]:
         """Get peers using AI (cached)"""
-        prompt = f"List {num_peers} similar stock tickers to {ticker}. Same industry, similar size. US exchanges only. No {ticker}."
+        prompt = f'List {num_peers} similar stock tickers to {ticker}. Same industry, similar size. US exchanges only.\n'
+        'Example: 10, AAPL'
         
         response = self.ai_client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt,
             config={
-                "temperature": 0.01,
+                "temperature": 0.05,
                 "response_mime_type": "application/json",
                 "response_schema": list[str],
             },
@@ -763,3 +764,21 @@ if __name__ == "__main__":
         print("Cached metrics retrieved")
     except ValueError as e:
         print(f"Error: {e}")
+
+class BasicInfoService:
+
+    def __init__(self):
+        pass
+
+    def get_info(stock):
+        info = {}
+
+        tick = yf.Ticker(stock)
+        tick_info = tick.info
+
+        info["full_name"] = tick_info["longName"]
+        info["price"] = tick_info["currentPrice"]
+        info[stock] = stock
+
+
+        return info

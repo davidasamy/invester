@@ -4,6 +4,43 @@ import Stock from './stock';
 const API_BASE_URL = 'http://localhost:8000';
 const MAX_SIMILAR_COMPANIES = 5;
 
+// Popular stocks data
+const POPULAR_STOCKS = [
+  { ticker: 'AAPL', name: 'Apple Inc.', category: 'Tech' },
+  { ticker: 'MSFT', name: 'Microsoft Corp.', category: 'Tech' },
+  { ticker: 'GOOGL', name: 'Alphabet Inc.', category: 'Tech' },
+  { ticker: 'AMZN', name: 'Amazon.com Inc.', category: 'E-commerce' },
+  { ticker: 'TSLA', name: 'Tesla Inc.', category: 'Auto' },
+  { ticker: 'NVDA', name: 'NVIDIA Corp.', category: 'Tech' },
+  { ticker: 'META', name: 'Meta Platforms', category: 'Social Media' },
+  { ticker: 'NFLX', name: 'Netflix Inc.', category: 'Entertainment' },
+  { ticker: 'JPM', name: 'JPMorgan Chase', category: 'Finance' },
+  { ticker: 'JNJ', name: 'Johnson & Johnson', category: 'Healthcare' },
+  { ticker: 'V', name: 'Visa Inc.', category: 'Finance' },
+  { ticker: 'PG', name: 'Procter & Gamble', category: 'Consumer Goods' },
+
+  // Additional stocks
+  { ticker: 'DIS', name: 'Walt Disney Co.', category: 'Entertainment' },
+  { ticker: 'BAC', name: 'Bank of America', category: 'Finance' },
+  { ticker: 'XOM', name: 'Exxon Mobil Corp.', category: 'Energy' },
+  { ticker: 'WMT', name: 'Walmart Inc.', category: 'Retail' },
+  { ticker: 'KO', name: 'Coca-Cola Co.', category: 'Beverage' },
+  { ticker: 'PEP', name: 'PepsiCo Inc.', category: 'Beverage' },
+  { ticker: 'CSCO', name: 'Cisco Systems', category: 'Tech' },
+  { ticker: 'ADBE', name: 'Adobe Inc.', category: 'Tech' },
+  { ticker: 'CRM', name: 'Salesforce Inc.', category: 'Tech' },
+  { ticker: 'INTC', name: 'Intel Corp.', category: 'Tech' },
+  { ticker: 'PFE', name: 'Pfizer Inc.', category: 'Healthcare' },
+  { ticker: 'CVX', name: 'Chevron Corp.', category: 'Energy' },
+  { ticker: 'NKE', name: 'Nike Inc.', category: 'Apparel' },
+  { ticker: 'MCD', name: 'McDonald’s Corp.', category: 'Food' },
+  { ticker: 'ORCL', name: 'Oracle Corp.', category: 'Tech' },
+  { ticker: 'T', name: 'AT&T Inc.', category: 'Telecom' },
+  { ticker: 'UNH', name: 'UnitedHealth Group', category: 'Healthcare' },
+  { ticker: 'ABBV', name: 'AbbVie Inc.', category: 'Healthcare' },
+];
+
+
 const Homepage = () => {
   const [ticker, setTicker] = useState('');
   const [similarCompanies, setSimilarCompanies] = useState([]);
@@ -14,6 +51,12 @@ const Homepage = () => {
   const [curTickerData, setCurTickerData] = useState(null);
   // New state to cache all fetched stock data
   const [stockDataCache, setStockDataCache] = useState({});
+  // State for popular stock prices
+  const [popularStockPrices, setPopularStockPrices] = useState({});
+  const [loadingPrices, setLoadingPrices] = useState(false);
+  // State for hover effects
+  const [hoveredStock, setHoveredStock] = useState(null);
+  const [hoveredSimilar, setHoveredSimilar] = useState(null);
 
   // Helper function to determine metric color based on value and type
   const getMetricColor = useCallback((metricType, value, currentPrice = null, dcfValue = null) => {
@@ -41,7 +84,7 @@ const Homepage = () => {
           if (currentPrice > dcfValue * 1.1) return 'text-danger'; // Red - Overvalued (bad)
           return 'text-warning'; // Yellow - Fair value
         }
-        return 'stock-green'; // Default to your existing green
+        return 'text-success'; // Default to success
         
       case 'dcf':
         // DCF color based on whether current price is below (good) or above (bad) DCF value
@@ -50,10 +93,32 @@ const Homepage = () => {
           if (currentPrice > value * 1.1) return 'text-danger'; // Red - Stock is overvalued
           return 'text-warning'; // Yellow - Close to fair value
         }
-        return 'stock-green'; // Default to your existing green
+        return 'text-success'; // Default to success
+        
+      case 'valuation':
+        // Color for calculated value price vs current price
+        if (currentPrice && value) {
+          if (value > currentPrice * 1.05) return 'text-success'; // Green - Target price higher
+          if (value < currentPrice * 0.95) return 'text-danger'; // Red - Target price lower
+          return 'text-warning'; // Yellow - Close to current price
+        }
+        return 'text-success';
+        
+      case 'roe':
+        // Return on Equity: >15% good, 10-15% decent, <10% poor
+        const roePercent = value > 1 ? value : value * 100;
+        if (roePercent >= 15) return 'text-success';
+        if (roePercent >= 10) return 'text-warning';
+        return 'text-danger';
+        
+      case 'debt_to_equity':
+        // Lower is better: <0.3 good, 0.3-1.0 decent, >1.0 poor
+        if (value < 0.3) return 'text-success';
+        if (value <= 1.0) return 'text-warning';
+        return 'text-danger';
         
       default:
-        return 'stock-green'; // Default to your existing green
+        return 'text-success'; // Default to success
     }
   }, []);
 
@@ -86,7 +151,57 @@ const Homepage = () => {
     }
   }, []);
 
-  // Memoized helper function to fetch stock data
+  // Function to fetch popular stock prices using basic endpoint
+  const fetchPopularStockPrices = useCallback(async () => {
+    setLoadingPrices(true);
+    const pricePromises = POPULAR_STOCKS.map(async (stock) => {
+      try {
+        // Check if we already have basic price data cached
+        if (popularStockPrices[stock.ticker]) {
+          return {
+            ticker: stock.ticker,
+            price: popularStockPrices[stock.ticker]
+          };
+        }
+        
+        // Fetch from basic API endpoint
+        const response = await fetch(`${API_BASE_URL}/basic/${stock.ticker}`);
+        const data = await response.json();
+        
+        if (response.ok && data.basic_info) {
+          return {
+            ticker: stock.ticker,
+            price: data.basic_info.price
+          };
+        }
+      } catch (error) {
+        console.error(`Error fetching price for ${stock.ticker}:`, error);
+      }
+      return { ticker: stock.ticker, price: null };
+    });
+
+    try {
+      const priceResults = await Promise.all(pricePromises);
+      const pricesMap = {};
+      priceResults.forEach(result => {
+        if (result.price !== null) {
+          pricesMap[result.ticker] = result.price;
+        }
+      });
+      setPopularStockPrices(pricesMap);
+    } catch (error) {
+      console.error('Error fetching popular stock prices:', error);
+    } finally {
+      setLoadingPrices(false);
+    }
+  }, [popularStockPrices]);
+
+  // Effect to fetch popular stock prices on component mount
+  React.useEffect(() => {
+    if (Object.keys(popularStockPrices).length === 0) {
+      fetchPopularStockPrices();
+    }
+  }, []);
   const fetchStockData = useCallback(async (symbol) => {
     const upperSymbol = symbol.toUpperCase();
     
@@ -153,6 +268,31 @@ const Homepage = () => {
       setLoading(false);
     }
   }, [ticker, fetchStockData, processPeerTickers]);
+
+  // New function to handle popular stock selection
+  const handlePopularStockSelect = useCallback(async (stockTicker) => {
+    setTicker(stockTicker);
+    setLoading(true);
+    setError('');
+    setHasSearched(false);
+    setCurTickerData(null);
+
+    try {
+      const valuationResult = await fetchStockData(stockTicker);
+      setCurTickerData(valuationResult);
+      
+      const filteredCompanies = processPeerTickers(valuationResult.peer_tickers, stockTicker);
+      setSimilarCompanies(filteredCompanies);
+      setHasSearched(true);
+
+    } catch (err) {
+      setError('Failed to fetch stock data. Please check if the ticker is valid.');
+      setSimilarCompanies([]);
+      setCurTickerData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchStockData, processPeerTickers]);
 
   const handleInputChange = useCallback((e) => {
     setTicker(e.target.value);
@@ -266,19 +406,14 @@ const Homepage = () => {
           <button
             key={company}
             onClick={() => handleStockSelect(company)}
+            // onMouseEnter={() => setHoveredSimilar(company)}
+            // onMouseLeave={() => setHoveredSimilar(null)}
             className="btn text-start p-3 rounded-3 border-0"
             style={{
-              background: '#262626',
+              // background: hoveredSimilar === company ? '#333' : '#262626',
               color: 'white',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-1px)';
-              e.target.style.background = '#333';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.background = '#262626';
+              transition: 'all 0.2s ease',
+              // transform: hoveredSimilar === company ? 'translateY(-1px)' : 'translateY(0)'
             }}
           >
             <div className="d-flex justify-content-between align-items-center">
@@ -296,7 +431,103 @@ const Homepage = () => {
         <p className="text-secondary mb-0" style={{fontSize: '0.9rem'}}>No similar companies found</p>
       </div>
     )
-  ), [similarCompanies, handleStockSelect]);
+  ), [similarCompanies, handleStockSelect, hoveredSimilar]);
+
+  // Popular stocks grid component
+  const popularStocksGrid = useMemo(() => (
+    <div className="row g-3">
+      {POPULAR_STOCKS.map((stock) => {
+        const currentPrice = popularStockPrices[stock.ticker];
+        const isLoadingPrice = loadingPrices && !currentPrice;
+        
+        return (
+          <div key={stock.ticker} className="col-lg-2 col-md-3 col-sm-4 col-6">
+            <button
+              onClick={() => handlePopularStockSelect(stock.ticker)}
+              className="btn w-100 p-3 rounded-3 border-0 text-start"
+              style={{
+                background: '#1a1a1a',
+                color: 'white',
+                border: '1px solid #333',
+                transition: 'all 0.2s ease',
+                minHeight: '120px'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.background = '#262626';
+                e.target.style.borderColor = '#00C851';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.background = '#1a1a1a';
+                e.target.style.borderColor = '#333';
+              }}
+              disabled={loading}
+            >
+              <div className="d-flex flex-column h-100">
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                  <span className="fw-bold" style={{fontSize: '1rem', color: '#00C851'}}>
+                    {stock.ticker}
+                  </span>
+                  <span 
+                    className="badge rounded-pill" 
+                    style={{
+                      backgroundColor: 'rgba(0, 200, 81, 0.1)', 
+                      color: '#00C851', 
+                      fontSize: '0.7rem'
+                    }}
+                  >
+                    {stock.category}
+                  </span>
+                </div>
+                
+                {/* Price Display */}
+                <div className="mb-2">
+                  {isLoadingPrice ? (
+                    <div className="d-flex align-items-center">
+                      <div 
+                        className="spinner-border spinner-border-sm me-2" 
+                        style={{color: '#00C851', width: '12px', height: '12px'}}
+                        role="status"
+                      >
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                      <span className="text-secondary" style={{fontSize: '0.85rem'}}>
+                        Loading...
+                      </span>
+                    </div>
+                  ) : currentPrice ? (
+                    <span className="fw-bold text-white" style={{fontSize: '0.9rem'}}>
+                      ${currentPrice.toFixed(2)}
+                    </span>
+                  ) : (
+                    <span className="text-secondary" style={{fontSize: '0.85rem'}}>
+                      Price N/A
+                    </span>
+                  )}
+                </div>
+                
+                <span 
+                  className="text-secondary mt-auto" 
+                  style={{
+                    fontSize: '0.8rem', 
+                    lineHeight: '1.2',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical'
+                  }}
+                >
+                  {stock.name}
+                </span>
+              </div>
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  ), [handlePopularStockSelect, loading, popularStockPrices, loadingPrices]);
 
   if (selectedStock) {
     return <Stock selectedStock={selectedStock} goBackToStocks={goBackToStocks} />;
@@ -304,12 +535,9 @@ const Homepage = () => {
 
   return (
     <div className="bg-pure-black text-white min-vh-100 py-5">
-        {/* <img className="rising" src="rising.png"/> */}
       <div className="container">
         {/* Header */}
-
         <div className="text-center">
-          
           <h1 className="stock-green display-4 fw-bold mb-3">Stock Overflow</h1> 
           <p className="lead text-secondary mb-4">
             AI-Powered Investing for Everyone.
@@ -356,6 +584,21 @@ const Homepage = () => {
           )}
         </form>
 
+        {/* Popular Stocks Section */}
+        {!hasSearched && !loading && (
+          <div className="mb-5">
+            <div className="text-center mb-4">
+              <h3 className="text-white mb-2" style={{fontSize: '1.5rem', fontWeight: '600'}}>
+                Popular Stocks
+              </h3>
+              <p className="text-secondary" style={{fontSize: '0.95rem'}}>
+                Click on any stock below to get instant valuation
+              </p>
+            </div>
+            {popularStocksGrid}
+          </div>
+        )}
+
         {/* Loading State */}
         {loading && !hasSearched && (
           <div className="d-flex justify-content-center mb-5">
@@ -387,7 +630,7 @@ const Homepage = () => {
                 
                 <div className="text-center mt-4 pt-3" style={{borderTop: '1px solid #333'}}>
                   <p className="text-secondary mb-2" style={{fontSize: '0.95rem'}}>Stock Overflow Valuation</p>
-                  <h3 className='mb-3' style={{ fontSize: '2.2rem', fontWeight: '700'}}>
+                  <h3 className={`mb-3 ${getMetricColor('valuation', curTickerData.calculated_value_price, curTickerData.current_price)}`} style={{ fontSize: '2.2rem', fontWeight: '700'}}>
                     ${curTickerData.calculated_value_price.toFixed(2)}
                   </h3>
                   <button

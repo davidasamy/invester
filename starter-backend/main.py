@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from gemini_utils import StockValuationService
+from core_services import StockValuationService, BasicInfoService
 from pydantic import BaseModel
 from sentiment import StockSentimentService
 from dcf import calculate_dcf_with_llm_rates
@@ -40,9 +40,9 @@ async def value(stock: str):
 async def sentiment(stock: str):
     return {"result": sentiment_service.get_sentiment(stock)}
 
-@app.get("/peers/{stock}")
-async def read_item(stock: str):
-    return {"peers": [stock, 'test']}
+@app.get("/basic/{stock}")
+async def basic(stock: str):
+    return {"basic_info": BasicInfoService.get_info(stock)}
 
 @app.post("/api/dcf-calculate")
 async def dcf_calculate_endpoint(request: DcfCalculationRequest):
