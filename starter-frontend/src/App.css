@@ -74,3 +74,9 @@
 .metric-desc {
   color: white;
 }
+
+html, body {
+  background-color: #000000 !important;
+  margin: 0;
+  padding: 0;
+}

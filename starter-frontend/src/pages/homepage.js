@@ -16,7 +16,7 @@ const Homepage = () => {
   const [stockDataCache, setStockDataCache] = useState({});
 
   // Helper function to determine metric color based on value and type
-  const getMetricColor = useCallback((metricType, value) => {
+  const getMetricColor = useCallback((metricType, value, currentPrice = null, dcfValue = null) => {
     if (value === null || value === undefined) return 'text-secondary';
     
     switch (metricType) {
@@ -35,12 +35,21 @@ const Homepage = () => {
         return 'text-danger';
         
       case 'price_comparison':
-        // Compare current price vs calculated value
-        // This would need the calculated value to determine if stock is undervalued/overvalued
+        // Compare current price vs DCF value
+        if (currentPrice && dcfValue) {
+          if (currentPrice < dcfValue) return 'text-success'; // Green - Undervalued (good)
+          if (currentPrice > dcfValue * 1.1) return 'text-danger'; // Red - Overvalued (bad)
+          return 'text-warning'; // Yellow - Fair value
+        }
         return 'stock-green'; // Default to your existing green
         
       case 'dcf':
-        // DCF is typically just informational
+        // DCF color based on whether current price is below (good) or above (bad) DCF value
+        if (currentPrice && value) {
+          if (currentPrice < value) return 'text-success'; // Green - Stock is undervalued
+          if (currentPrice > value * 1.1) return 'text-danger'; // Red - Stock is overvalued
+          return 'text-warning'; // Yellow - Close to fair value
+        }
         return 'stock-green'; // Default to your existing green
         
       default:
@@ -49,7 +58,7 @@ const Homepage = () => {
   }, []);
 
   // Helper function to get metric description with color context
-  const getMetricDescription = useCallback((metricType, value) => {
+  const getMetricDescription = useCallback((metricType, value, currentPrice = null) => {
     if (value === null || value === undefined) return 'N/A';
     
     switch (metricType) {
@@ -63,6 +72,14 @@ const Homepage = () => {
         if (margin >= 15) return 'Strong Profit Margin';
         if (margin >= 5) return 'Moderate Profit Margin';
         return 'Low Profit Margin';
+        
+      case 'dcf':
+        if (currentPrice && value) {
+          if (currentPrice < value) return 'Undervalued';
+          if (currentPrice > value * 1.1) return 'Overvalued';
+          return 'Fair Value';
+        }
+        return '';
         
       default:
         return '';
@@ -178,23 +195,31 @@ const Homepage = () => {
     if (!curTickerData) return null;
     console.log(curTickerData);
     const { target_metrics } = curTickerData;
+    const currentPrice = curTickerData.current_price;
+    const dcfValue = curTickerData.dcf_price["Intrinsic Value Per Share"];
     
     return (
       <div className="row text-center">
         <div className="col-6 col-md-3 mb-4">
           <div className="p-3 rounded-3" style={{background: 'rgba(255, 255, 255, 0.02)'}}>
-            <p className={`mb-1 fw-bold ${getMetricColor('price_comparison', curTickerData.current_price)}`} style={{fontSize: '1.4rem'}}>
-              ${curTickerData.current_price.toFixed(2)}
+            <p className={`mb-1 fw-bold `} style={{fontSize: '1.4rem'}}>
+              ${currentPrice.toFixed(2)}
             </p>
             <p className="small text-secondary mb-0" style={{fontSize: '0.85rem'}}>Current Price</p>
           </div>
         </div>
         <div className="col-6 col-md-3 mb-4">
           <div className="p-3 rounded-3" style={{background: 'rgba(255, 255, 255, 0.02)'}}>
-            <p className={`mb-1 fw-bold ${getMetricColor('dcf', curTickerData.dcf_price["Intrinsic Value Per Share"])}`} style={{fontSize: '1.4rem'}}>
-              ${curTickerData.dcf_price["Intrinsic Value Per Share"].toFixed(2)}
+            <p className={`mb-1 fw-bold 
+              ${getMetricColor('dcf', dcfValue, currentPrice)}`} style={{fontSize: '1.4rem'}}>
+              ${dcfValue.toFixed(2)}
             </p>
-            <p className="small text-secondary mb-0" style={{fontSize: '0.85rem'}}>DCF Value</p>
+            <p className="small text-secondary mb-0" style={{fontSize: '0.85rem'}}>
+              DCF Value
+              <span className={`d-block ${getMetricColor('dcf', dcfValue, currentPrice)}`} style={{fontSize: '0.75rem'}}>
+                {getMetricDescription('dcf', dcfValue, currentPrice)}
+              </span>
+            </p>
           </div>
         </div>
         <div className="col-6 col-md-3 mb-4">
@@ -295,7 +320,7 @@ const Homepage = () => {
         <form onSubmit={getFullStockDataSearch} className="mb-5">
           <div className="mb-3">
             <label htmlFor="ticker" className="form-label text-white">
-              Enter Stock Ticker Symbol
+              Enter Stock Ticker
             </label>
             <div className="input-group">
               <input
@@ -362,7 +387,7 @@ const Homepage = () => {
                 
                 <div className="text-center mt-4 pt-3" style={{borderTop: '1px solid #333'}}>
                   <p className="text-secondary mb-2" style={{fontSize: '0.95rem'}}>Stock Overflow Valuation</p>
-                  <h3 className="mb-3" style={{color: '#00C851', fontSize: '2.2rem', fontWeight: '700'}}>
+                  <h3 className='mb-3' style={{ fontSize: '2.2rem', fontWeight: '700'}}>
                     ${curTickerData.calculated_value_price.toFixed(2)}
                   </h3>
                   <button
