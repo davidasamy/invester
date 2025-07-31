@@ -324,7 +324,7 @@ const Stock = ({ selectedStock, goBackToStocks }) => {
           <div className="bg-dark rounded-3 p-3 h-100">
             <h5 className="text-secondary small mb-2">Debt-to-Equity</h5>
             <p className={`mb-1 fw-bold fs-5 ${getMetricColor('debt_to_equity', target_metrics?.debt_to_equity)}`}>
-              {target_metrics?.debt_to_equity?.toFixed(2) || 'N/A'}
+              {target_metrics?.debt_to_equity?.toFixed(2) || 'N/A'}%
             </p>
             <small className={`${getMetricColor('debt_to_equity', target_metrics?.debt_to_equity)}`} style={{fontSize: '0.75rem'}}>
               {getMetricDescription('debt_to_equity', target_metrics?.debt_to_equity)}
